@@ -1,0 +1,44 @@
+.TH "irrpoly::multithread::pipeline< input_t, output_t >" 3 "Sun Jun 21 2020" "Version 2.3.0" "irrpoly" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+irrpoly::multithread::pipeline< input_t, output_t >
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <pipeline\&.hpp>\fP
+.SS "Public Types"
+
+.in +1c
+.ti -1c
+.RI "using \fBinput_fn\fP = std::function< input_t()>"
+.br
+.ti -1c
+.RI "using \fBpayload_fn\fP = std::function< void(const input_t &, std::optional< output_t > &)>"
+.br
+.ti -1c
+.RI "using \fBcallback_fn\fP = std::function< bool(const input_t &, const output_t &)>"
+.br
+.in -1c
+.SS "Public Member Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBpipeline\fP (unsigned n=std::thread::hardware_concurrency())"
+.br
+.ti -1c
+.RI "void \fBchain\fP (input_fn in, payload_fn pl, callback_fn bk, const bool strict=true)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.SS "template<typename input_t, typename output_t>
+.br
+class irrpoly::multithread::pipeline< input_t, output_t >"
+Chains the input_fn, payload_fn and callback_fn provided\&. Executes this chain in several threads at the same time\&. TODO: change architecture to make checks faster\&. 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for irrpoly from the source code\&.

@@ -1,0 +1,284 @@
+/*
+ * 多项式相关算法模板集合
+ */
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+// 2281701377是一个原根为3的指数,平方刚好不会爆long long
+// 另外一个常用的998244353 = 119RingT * (1 << 23) + 1
+// 1004535809=479⋅221+1 加起来刚好不会爆 int 也不错
+const ll mod_v = 17ll * (1 << 27) + 1;
+const int MAXL = 18, N = 1 << MAXL, M = 1 << MAXL;  // MAXL最大取mov_v的2次幂
+template <typename RingT,typename T>
+struct polynomial {
+    RingT coef[N]; // size设为多项式系数个数的两倍
+    RingT a[N], b[N], d[N], r[N];
+    RingT xcoor[N], ycoor[N], v[N], mcoef[N];  // size设为点个数的两倍
+    vector<vector<RingT> > poly_divisor;
+
+    static T mod_pow(T x,T n,T m) {
+        T ans = 1;
+        while(n > 0){
+            if(n & 1)
+                ans = ans*x%m;
+            x = x*x%m;
+            n >>= 1;
+        }
+        return ans;
+    }
+
+    struct FastNumberTheoreticTransform  {
+        T omega[N], omegaInverse[N];
+        int range;
+
+        // 初始化频率
+        void init (const int& n) {
+            range = n;
+            T base = mod_pow(3, (mod_v - 1) / n, mod_v);
+            T inv_base = mod_pow(base, mod_v - 2, mod_v);
+            omega[0] = omegaInverse[0] = 1;
+            for (int i = 1; i < n; ++i) {
+                omega[i] = omega[i - 1] * base % mod_v;
+                omegaInverse[i] = omegaInverse[i - 1] * inv_base % mod_v;
+            }
+        }
+
+        // Cooley-Tukey算法:O(n*logn)
+        void transform (RingT *a, const RingT *omega, const int &n) {
+            for (int i = 0, j = 0; i < n; ++i) {
+                if (i > j) std::swap (a[i], a[j]);
+                for(int l = n >> 1; ( j ^= l ) < l; l >>= 1);
+            }
+
+            for (int l = 2; l <= n; l <<= 1) {
+                int m = l / 2;
+                for (RingT *p = a; p != a + n; p += l) {
+                    for (int i = 0; i < m; ++i) {
+                        T t = omega[range / l * i] * p[m + i] % mod_v;
+                        p[m + i] = (p[i] - t + mod_v) % mod_v;
+                        p[i] = (p[i] + t) % mod_v;
+                    }
+                }
+            }
+        }
+
+
+        // 时域转频域
+        void dft (RingT *a, const int& n) {
+            transform(a, omega, n);
+        }
+
+        // 频域转时域
+        void idft (RingT *a, const int& n) {
+            transform(a, omegaInverse, n);
+            for (int i = 0; i < n; ++i) a[i] = a[i] * mod_pow(n, mod_v - 2, mod_v) % mod_v;
+        }
+    } fnt ;
+
+    // 与模比较转换值
+    RingT mod_trans(RingT v) {
+        return abs(v) <= mod_v / 2 ? v : (v < 0 ? v + mod_v : v - mod_v);
+    }
+
+    // 二分求\prod{x-xi}的所有二分子多项式的系数
+    void binary_subpoly(int l, int r, int idx) {
+        if (l == r - 1) {
+            poly_divisor[idx].push_back(-xcoor[l]);
+            poly_divisor[idx].push_back(1);
+        } else {
+            int lidx = (idx << 1) + 1, ridx = lidx + 1;
+            binary_subpoly(l, (l + r) / 2, lidx);
+            binary_subpoly((l + r) / 2, r, ridx);
+            int t = poly_divisor[lidx].size() + poly_divisor[ridx].size() - 1;
+            int p = 1;
+            while(p < t) p <<= 1;
+            copy(poly_divisor[lidx].begin(), poly_divisor[lidx].end(), a);
+            fill(a + poly_divisor[lidx].size(), a + p, 0);
+            copy(poly_divisor[ridx].begin(), poly_divisor[ridx].end(), b);
+            fill(b + poly_divisor[ridx].size(), b + p, 0);
+            fnt.dft(a, p);
+            fnt.dft(b, p);
+            for (int i = 0; i < p; i++)  a[i] *= b[i];
+            fnt.idft(a, p);
+            for (int i = 0; i < t; i++) poly_divisor[idx].push_back(mod_trans(a[i]));
+        }
+    }
+
+    // 模x^deg,a为要求逆元的多项式系数,结果存放在b[0~deg]中
+    // T(deg) = T(deg/2) + deg*log(deg)，复杂度O(deg*log(deg))
+    void polynomial_inverse(int deg, RingT* a, RingT* b, RingT* tmp) {
+        if(deg == 1) {
+            b[0] = mod_pow(a[0], mod_v - 2, mod_v);
+        } else {
+            polynomial_inverse((deg + 1) >> 1, a, b, tmp);
+            int p = 1;
+            while(p < (deg << 1) - 1) p <<= 1;
+            copy(a, a + deg, tmp);
+            fill(tmp + deg, tmp + p, 0);
+            fill(b + ((deg + 1) >> 1), b + p, 0);
+            //fnt.init(p);
+            fnt.dft(tmp, p);
+            fnt.dft(b, p);
+            for(int i = 0; i != p; ++i) {
+                b[i] = (2 - tmp[i] * b[i] % mod_v) * b[i] % mod_v;
+                if(b[i] < 0) b[i] += mod_v;
+            }
+            fnt.idft(b, p);
+            fill(b + deg, b + p, 0);
+        }
+    }
+
+    // A = D*B + R,A为n项n-1次幂,B为m项m-1次幂,D为n-m+1项n-m次幂,R为m-1项m-2次幂
+    // 要求a,b中系数以低次到多次顺序排列
+    // n >= m，复杂度O(n*logn)；n < m，复杂度O(n)
+    int polynomial_division(int n, int m, RingT *A, RingT *B, RingT *D, RingT *R) {
+        if (n < m) {
+            copy(A, A + n, R);
+            return n;
+        } else {
+            static RingT A0[N], B0[N], tmp[N]; //数组太大会爆栈,添加到全局区
+
+            int p = 1, t = n - m + 1;
+            while(p < (t << 1) - 1) p <<= 1;
+
+            fill(A0, A0 + p, 0);
+            reverse_copy(B, B + m, A0);
+            polynomial_inverse(t, A0, B0, tmp);
+            fill(B0 + t, B0 + p, 0);
+            fnt.dft(B0, p);
+
+            reverse_copy(A, A + n, A0);
+            fill(A0 + t, A0 + p, 0);
+            fnt.dft(A0, p);
+
+            for(int i = 0; i != p; ++i)
+                A0[i] = A0[i] * B0[i] % mod_v;
+            fnt.idft(A0, p);
+            reverse(A0, A0 + t);
+            copy(A0, A0 + t, D);
+
+            for(p = 1; p < n; p <<= 1);
+            fill(A0 + t, A0 + p, 0);
+            fnt.dft(A0, p);
+            copy(B, B + m, B0);
+            fill(B0 + m, B0 + p, 0);
+            fnt.dft(B0, p);
+            for(int i = 0; i != p; ++i)
+                A0[i] = A0[i] * B0[i] % mod_v;
+            fnt.idft(A0, p);
+            for(int i = 0; i != m - 1; ++i)
+                R[i] = ((A[i] - A0[i]) % mod_v + mod_v) % mod_v;
+            //fill(R + m - 1, R + p, 0);
+            return m - 1;
+        }
+    }
+
+    // 多项式的点值计算
+    // l和r为存储要求的点数组的左右边界(左闭右开), idx为除数多项式索引(初始０)
+    // polycoef为用于计算点的多项式系数，num为其系数个数
+    // 设多项式项数x=num，点数y=r-l，n=max(x,y)，复杂度O(n(logn)^2)
+    void polynomial_calculator(int l, int r, int idx, int num, RingT *polycoef) {
+        int mid = (l + r) / 2;
+        int lidx = (idx << 1) + 1, ridx = lidx + 1;
+        int lsize = poly_divisor[lidx].size(), rsize = poly_divisor[ridx].size();
+        RingT *lmod_poly = new RingT[lsize - 1], *rmod_poly = new RingT[rsize - 1];
+        copy(poly_divisor[lidx].begin(), poly_divisor[lidx].end(), a);
+        copy(poly_divisor[ridx].begin(), poly_divisor[ridx].end(), b);
+        int lplen = polynomial_division(num, lsize, polycoef, a, d, lmod_poly);
+        int rplen = polynomial_division(num, rsize, polycoef, b, d, rmod_poly);
+        if (l == mid - 1) {
+            v[l] = mod_trans(lmod_poly[0]);
+        } else {
+            polynomial_calculator(l, (l + r) / 2, lidx, lplen, lmod_poly);
+        }
+        if (r == mid + 1) {
+            v[(l + r) / 2] = mod_trans(rmod_poly[0]);
+        } else {
+            polynomial_calculator((l + r) / 2, r, ridx, rplen, rmod_poly);
+        }
+        delete []lmod_poly;
+        delete []rmod_poly;
+    }
+
+    // 拉格朗日插值：二分＋快速数论变换
+    // l和r为存储要求的点数组的左右边界(左闭右开), idx为由点二分构造出多项式的索引(初始０)
+    // polycoef为插值得到的多项式结果
+    // 设点个数为n，复杂度O(n*(logn)^2)，结果polycoef为n-1次多项式
+    void polynomial_interpolate(int l, int r, int idx, RingT *polycoef) {
+        if (l == r - 1) {
+            RingT tmp=ycoor[l] * mod_pow(v[l], mod_v - 2, mod_v);
+            polycoef[0] = mod_trans(tmp);
+        } else {
+            int mid = (l + r) >> 1;
+            int lidx = (idx << 1) + 1, ridx = lidx + 1;
+            int sz = poly_divisor[idx].size() - 1;
+            int lsize = poly_divisor[lidx].size(), rsize = poly_divisor[ridx].size();
+            int p = 1;
+            while (p < sz) p <<= 1;
+            RingT *leftpoly = new RingT[p], *rightpoly = new RingT[p];
+            polynomial_interpolate(l, mid, lidx, leftpoly);
+            polynomial_interpolate(mid, r, ridx, rightpoly);
+            copy(poly_divisor[lidx].begin(), poly_divisor[lidx].end(), a);
+            copy(poly_divisor[ridx].begin(), poly_divisor[ridx].end(), b);
+            fill(leftpoly + lsize - 1, leftpoly + p, 0);
+            fill(rightpoly + rsize - 1, rightpoly + p, 0);
+            fill(a + lsize, a + p, 0);
+            fill(b + rsize, b + p, 0);
+            fnt.dft(leftpoly, p);
+            fnt.dft(b, p);
+            for (int i = 0; i < p; i++) leftpoly[i] = leftpoly[i] * b[i] % mod_v;
+            fnt.idft(leftpoly, p);
+            fnt.dft(rightpoly, p);
+            fnt.dft(a, p);
+            for (int i = 0; i < p; i++) rightpoly[i] = rightpoly[i] * a[i] % mod_v;
+            fnt.idft(rightpoly, p);
+            for (int i = 0; i < sz; i++) polycoef[i] = mod_trans((leftpoly[i] + rightpoly[i]) % mod_v);
+            delete []leftpoly;
+            delete []rightpoly;
+        }
+    }
+
+    // 初始化点个数到二分子多项式个数
+    // 调用polynomial_calculator和polynomial_interpolate前调用
+    void init(int vnum) {
+        int vnum2 = 1;
+        while (vnum2 < vnum) vnum2 <<= 1;
+        for (int i = 0; i < 2 * vnum2 - 1; i++)  poly_divisor.push_back(vector<RingT>());
+    }
+};
+int main() {
+
+    polynomial<double,ll>* poly=new polynomial<double,ll>();
+    // 多项式系数默认低次到高次排列
+    ios_base::sync_with_stdio(false);
+
+    poly->fnt.init(1 << MAXL);
+
+    // 多项式插值
+    int vnum;
+    // 输入要计算的点
+    cin >> vnum;
+    for (int i = 0; i < vnum; i++) {
+        cin >> poly->xcoor[i] >> poly->ycoor[i];
+    }
+    // 二分求子多项式
+    poly->init(vnum);
+    poly->binary_subpoly(0, vnum, 0);
+    for (unsigned int i = 1; i < poly->poly_divisor[0].size(); i++) {
+        poly->mcoef[i - 1] = poly->poly_divisor[0][i] * i % mod_v;
+    }
+    // 遍历i计算所有\sum_{j!=i}{xi-xj}
+    poly->polynomial_calculator(0, vnum, 0, poly->poly_divisor[0].size() - 1, poly->mcoef);
+    // 拉格朗日插值计算多项式
+    poly->polynomial_interpolate(0, vnum, 0, poly->coef);
+    // 输出插值得到的多项式系数
+    for (int i = 0; i < vnum; i++) {
+        cout << poly->coef[i] << " ";
+    }
+    cout << endl;
+    // 将输入点代入插值得到的多项式中进行验证，输出计算得到的结果
+    poly->polynomial_calculator(0, vnum, 0, vnum, poly->coef);
+    for (int i = 0; i < vnum; i++) cout << poly->v[i] << " ";
+    cout << endl;
+    return 0;
+}

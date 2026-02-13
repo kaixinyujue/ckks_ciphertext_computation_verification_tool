@@ -1,0 +1,148 @@
+.TH "include/irrpoly/gf.hpp" 3 "Sun Jun 21 2020" "Version 2.3.0" "irrpoly" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/irrpoly/gf.hpp
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'nn\&.hpp'\fP
+.br
+\fC#include <algorithm>\fP
+.br
+\fC#include <utility>\fP
+.br
+\fC#include <vector>\fP
+.br
+\fC#include <cstdint>\fP
+.br
+\fC#include <ostream>\fP
+.br
+\fC#include <random>\fP
+.br
+\fC#include <stdexcept>\fP
+.br
+\fC#include <type_traits>\fP
+.br
+\fC#include <memory>\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "class \fBirrpoly::gfbase\fP"
+.br
+.ti -1c
+.RI "class \fBirrpoly::gfn\fP"
+.br
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBNN_CHECK_THROW\fP(_e)"
+.br
+.ti -1c
+.RI "#define \fBCHECK_FIELD\fP(comparison)"
+.br
+.ti -1c
+.RI "#define \fBGFN_COMPARISON_OPERATORS\fP(op)"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "using \fBirrpoly::gf\fP = \fBdropbox::oxygen::nn_shared_ptr\fP< gfbase >"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "auto \fBirrpoly::operator==\fP (const gf &lb, const gf &rb) \-> bool"
+.br
+.ti -1c
+.RI "auto \fBirrpoly::operator!=\fP (const gf &lb, const gf &rb) \-> bool"
+.br
+.ti -1c
+.RI "auto \fBirrpoly::operator+\fP (const uintmax_t other, const gfn &curr) \-> gfn"
+.br
+.ti -1c
+.RI "auto \fBirrpoly::operator\-\fP (const uintmax_t other, const gfn &curr) \-> gfn"
+.br
+.ti -1c
+.RI "auto \fBirrpoly::operator*\fP (const uintmax_t other, const gfn &curr) \-> gfn"
+.br
+.ti -1c
+.RI "auto \fBirrpoly::operator/\fP (const uintmax_t other, const gfn &curr) \-> gfn"
+.br
+.ti -1c
+.RI "template<class charT , class traits > auto \fBirrpoly::operator<<\fP (std::basic_ostream< charT, traits > &os, const gfn &val) \-> std::basic_ostream< charT, traits > &"
+.br
+.ti -1c
+.RI "template<class charT , class traits > auto \fBirrpoly::operator>>\fP (std::basic_istream< charT, traits > &is, gfn &val) \-> std::basic_istream< charT, traits > &"
+.br
+.ti -1c
+.RI "auto \fBirrpoly::make_gf\fP (const uintmax_t base) \-> gf"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.PP
+\fBAuthor\fP
+.RS 4
+Vadim Piven vadim@piven.tech @license Free use of this library is permitted under the guidelines and in accordance with the MIT License (MIT)\&. @url https://github.com/irreducible-polynoms/irrpoly 
+.RE
+.PP
+
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define CHECK_FIELD(comparison)"
+\fBValue:\fP
+.PP
+.nf
+    if (!(comparison)) { \
+        throw std::logic_error("field check failed"); \
+    }
+.fi
+Binary operations for two gfn instances are correctly defined only when field is the same for both of them\&. By default this is checked only in Debug configuration and no checks performed in Release to speed up computations\&. If you are not sure in correctness of your code add #define IRRPOLY_RELEASE_CHECKED before #include <irrpoly\&.h> to enable checks for Release configuration\&. 
+.SS "#define GFN_COMPARISON_OPERATORS(op)"
+\fBValue:\fP
+.PP
+.nf
+    inline \
+    auto operator op(const gfn &l, const gfn &r) -> bool { \
+        CHECK_FIELD(l\&.field() == r\&.field()) \
+        return l\&.value() op r\&.value(); \
+    } \
+    \
+    inline \
+    auto operator op(const gfn &l, const uintmax_t r) -> bool { \
+        return l\&.value() op (r % l\&.base()); \
+    } \
+    \
+    inline \
+    auto operator op(const uintmax_t l, const gfn &r) -> bool { \
+        return (l % r\&.base()) op r\&.value(); \
+    }
+.fi
+.SS "#define NN_CHECK_THROW(_e)"
+\fBValue:\fP
+.PP
+.nf
+        (([&] (typename std::remove_reference<decltype(_e)>::type p) { \
+        if (!p) throw std::runtime_error(#_e " must not be null"); \
+        return dropbox::oxygen::nn<typename std::remove_reference<decltype(p)>::type>( \
+            dropbox::oxygen::i_promise_i_checked_for_null, std::move(p)); \
+    })(_e))
+.fi
+.SH "Typedef Documentation"
+.PP 
+.SS "using \fBirrpoly::gf\fP = typedef \fBdropbox::oxygen::nn_shared_ptr\fP<gfbase>"
+gf type represents PRIME Galois field\&. It is a shared pointer that couldn't contain nullptr value that allows to get rid of null checks at runtime\&. gf instance could be constructed only then associated Galois field exists\&. This fact is checked by calculating multiplicative inverse for every elements\&. In PRIME field all multiplicative inverse elements must exist\&. The smallest field you can create is GF[2], the largest is GF[65521] for 32-bit architecture and GF[4294967291] for 64-bit architecture\&. gfn instance must always be passed by reference and copied at the very last moment\&. TODO: add support for COMPOSITE fields P^N\&. 
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for irrpoly from the source code\&.

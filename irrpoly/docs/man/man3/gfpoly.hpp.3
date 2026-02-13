@@ -1,0 +1,143 @@
+.TH "include/irrpoly/gfpoly.hpp" 3 "Sun Jun 21 2020" "Version 2.3.0" "irrpoly" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/irrpoly/gfpoly.hpp
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'gf\&.hpp'\fP
+.br
+\fC#include <vector>\fP
+.br
+\fC#include <functional>\fP
+.br
+\fC#include <initializer_list>\fP
+.br
+\fC#include <string>\fP
+.br
+\fC#include <sstream>\fP
+.br
+\fC#include <cctype>\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "class \fBirrpoly::gfpoly\fP"
+.br
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBCHECK_FIELD\fP(comparison)"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "auto \fBirrpoly::operator\-\fP (gfpoly a) \-> gfpoly"
+.br
+.ti -1c
+.RI "auto \fBirrpoly::operator+\fP (const gfpoly &a, const gfpoly &b) \-> gfpoly"
+.br
+.ti -1c
+.RI "auto \fBirrpoly::operator+\fP (gfpoly &&a, const gfpoly &b) \-> gfpoly"
+.br
+.ti -1c
+.RI "auto \fBirrpoly::operator+\fP (const gfpoly &a, gfpoly &&b) \-> gfpoly"
+.br
+.ti -1c
+.RI "auto \fBirrpoly::operator+\fP (gfpoly &&a, gfpoly &&b) \-> gfpoly"
+.br
+.ti -1c
+.RI "auto \fBirrpoly::operator\-\fP (const gfpoly &a, const gfpoly &b) \-> gfpoly"
+.br
+.ti -1c
+.RI "auto \fBirrpoly::operator\-\fP (gfpoly &&a, const gfpoly &b) \-> gfpoly"
+.br
+.ti -1c
+.RI "auto \fBirrpoly::operator\-\fP (const gfpoly &a, gfpoly &&b) \-> gfpoly"
+.br
+.ti -1c
+.RI "auto \fBirrpoly::operator\-\fP (gfpoly &&a, gfpoly &&b) \-> gfpoly"
+.br
+.ti -1c
+.RI "auto \fBirrpoly::operator*\fP (const gfpoly &a, const gfpoly &b) \-> gfpoly"
+.br
+.ti -1c
+.RI "auto \fBirrpoly::operator/\fP (const gfpoly &a, const gfpoly &b) \-> gfpoly"
+.br
+.ti -1c
+.RI "auto \fBirrpoly::operator%\fP (const gfpoly &a, const gfpoly &b) \-> gfpoly"
+.br
+.ti -1c
+.RI "template<class U > auto \fBirrpoly::operator+\fP (gfpoly a, const U &b) \-> gfpoly"
+.br
+.ti -1c
+.RI "template<class U > auto \fBirrpoly::operator\-\fP (gfpoly a, const U &b) \-> gfpoly"
+.br
+.ti -1c
+.RI "template<class U > auto \fBirrpoly::operator*\fP (gfpoly a, const U &b) \-> gfpoly"
+.br
+.ti -1c
+.RI "template<class U > auto \fBirrpoly::operator/\fP (gfpoly a, const U &b) \-> gfpoly"
+.br
+.ti -1c
+.RI "template<class U > auto \fBirrpoly::operator%\fP (const gfpoly &a, const U &) \-> gfpoly"
+.br
+.ti -1c
+.RI "template<class U > auto \fBirrpoly::operator+\fP (const U &a, gfpoly b) \-> gfpoly"
+.br
+.ti -1c
+.RI "template<class U > auto \fBirrpoly::operator\-\fP (const U &a, gfpoly b) \-> gfpoly"
+.br
+.ti -1c
+.RI "template<class U > auto \fBirrpoly::operator*\fP (const U &a, gfpoly b) \-> gfpoly"
+.br
+.ti -1c
+.RI "auto \fBirrpoly::operator==\fP (const gfpoly &a, const gfpoly &b) \-> bool"
+.br
+.ti -1c
+.RI "auto \fBirrpoly::operator!=\fP (const gfpoly &a, const gfpoly &b) \-> bool"
+.br
+.ti -1c
+.RI "template<typename U > auto \fBirrpoly::operator>>\fP (gfpoly a, const U &b) \-> gfpoly"
+.br
+.ti -1c
+.RI "template<typename U > auto \fBirrpoly::operator<<\fP (gfpoly a, const U &b) \-> gfpoly"
+.br
+.ti -1c
+.RI "template<class charT , class traits > auto \fBirrpoly::operator<<\fP (std::basic_ostream< charT, traits > &os, const gfpoly &poly) \-> std::basic_ostream< charT, traits > &"
+.br
+.ti -1c
+.RI "template<class charT , class traits > auto \fBirrpoly::operator>>\fP (std::basic_istream< charT, traits > &is, gfpoly &poly) \-> std::basic_istream< charT, traits > &"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.PP
+\fBAuthor\fP
+.RS 4
+Vadim Piven vadim@piven.tech @license Free use of this library is permitted under the guidelines and in accordance with the MIT License (MIT)\&. @url https://github.com/irreducible-polynoms/irrpoly 
+.RE
+.PP
+
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define CHECK_FIELD(comparison)"
+\fBValue:\fP
+.PP
+.nf
+    if (!(comparison)) { \
+        throw std::logic_error("field check failed"); \
+    }
+.fi
+Binary operations for two gfn instances are correctly defined only when field is the same for both of them\&. By default this is checked only in Debug configuration and no checks performed in Release to speed up computations\&. If you are not sure in correctness of your code add #define IRRPOLY_RELEASE_CHECKED before #include <irrpoly\&.h> to enable checks for Release configuration\&. 
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for irrpoly from the source code\&.

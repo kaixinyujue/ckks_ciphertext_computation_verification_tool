@@ -1,0 +1,153 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=9"/>
+<meta name="generator" content="Doxygen 1.8.18"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>irrpoly: Шаблон класса irrpoly::checker&lt; value_type, result_type &gt;</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr style="height: 56px;">
+  <td id="projectalign" style="padding-left: 0.5em;">
+   <div id="projectname">irrpoly
+   &#160;<span id="projectnumber">2.1.0</span>
+   </div>
+   <div id="projectbrief">Проверка многочленов на неприводимость и примитивность над заданным полем Галуа</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- Создано системой Doxygen 1.8.18 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:cf05388f2679ee054f2beb29a391d25f4e673ac3&amp;dn=gpl-2.0.txt GPL-v2 */
+var searchBox = new SearchBox("searchBox", "search",false,'Поиск');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:cf05388f2679ee054f2beb29a391d25f4e673ac3&amp;dn=gpl-2.0.txt GPL-v2 */
+$(function() {
+  initMenu('',true,false,'search.php','Поиск');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */</script>
+<div id="main-nav"></div>
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<iframe src="javascript:void(0)" frameborder="0" 
+        name="MSearchResults" id="MSearchResults">
+</iframe>
+</div>
+
+<div id="nav-path" class="navpath">
+  <ul>
+<li class="navelem"><b>irrpoly</b></li><li class="navelem"><a class="el" href="classirrpoly_1_1checker.html">checker</a></li>  </ul>
+</div>
+</div><!-- top -->
+<div class="header">
+  <div class="summary">
+<a href="#nested-classes">Классы</a> &#124;
+<a href="#pub-types">Открытые типы</a> &#124;
+<a href="#pub-methods">Открытые члены</a> &#124;
+<a href="classirrpoly_1_1checker-members.html">Полный список членов класса</a>  </div>
+  <div class="headertitle">
+<div class="title">Шаблон класса irrpoly::checker&lt; value_type, result_type &gt;</div>  </div>
+</div><!--header-->
+<div class="contents">
+
+<p>Выполняет проверку на неприводимось и примитивность заданного многочлена над полем GF[P].  
+ <a href="classirrpoly_1_1checker.html#details">Подробнее...</a></p>
+
+<p><code>#include &lt;<a class="el" href="checker_8hpp_source.html">checker.hpp</a>&gt;</code></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
+Открытые типы</h2></td></tr>
+<tr class="memitem:a708118f70cf34c7a300857efeabfb97d"><td class="memItemLeft" align="right" valign="top"><a id="a708118f70cf34c7a300857efeabfb97d"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classirrpoly_1_1checker.html#a708118f70cf34c7a300857efeabfb97d">input_func</a> = std::function&lt; value_type()&gt;</td></tr>
+<tr class="memdesc:a708118f70cf34c7a300857efeabfb97d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Вид функции, генерирующей многочлены для проверки. <br /></td></tr>
+<tr class="separator:a708118f70cf34c7a300857efeabfb97d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7abc6a6ff84fc4e3ddbb2eca6d766c69"><td class="memItemLeft" align="right" valign="top"><a id="a7abc6a6ff84fc4e3ddbb2eca6d766c69"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classirrpoly_1_1checker.html#a7abc6a6ff84fc4e3ddbb2eca6d766c69">check_func</a> = std::function&lt; void(const value_type &amp;, std::optional&lt; result_type &gt; &amp;)&gt;</td></tr>
+<tr class="memdesc:a7abc6a6ff84fc4e3ddbb2eca6d766c69"><td class="mdescLeft">&#160;</td><td class="mdescRight">Вид функции, выполняющей проверку и сохраняющей результат. <br /></td></tr>
+<tr class="separator:a7abc6a6ff84fc4e3ddbb2eca6d766c69"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a25a9fc7a0838e9441f0d8efac4ccbf91"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classirrpoly_1_1checker.html#a25a9fc7a0838e9441f0d8efac4ccbf91">callback_func</a> = std::function&lt; bool(const value_type &amp;, const result_type &amp;)&gt;</td></tr>
+<tr class="separator:a25a9fc7a0838e9441f0d8efac4ccbf91"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
+Открытые члены</h2></td></tr>
+<tr class="memitem:a2c59abecc11b33399df171d3d6cbcf66"><td class="memItemLeft" align="right" valign="top"><a id="a2c59abecc11b33399df171d3d6cbcf66"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>checker</b> (unsigned n=std::thread::hardware_concurrency())</td></tr>
+<tr class="separator:a2c59abecc11b33399df171d3d6cbcf66"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acc20c7913c9f213e3d10be0b393856d2"><td class="memItemLeft" align="right" valign="top"><a id="acc20c7913c9f213e3d10be0b393856d2"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classirrpoly_1_1checker.html#acc20c7913c9f213e3d10be0b393856d2">check</a> (uint64_t n, <a class="el" href="classirrpoly_1_1checker.html#a708118f70cf34c7a300857efeabfb97d">input_func</a> in, <a class="el" href="classirrpoly_1_1checker.html#a7abc6a6ff84fc4e3ddbb2eca6d766c69">check_func</a> cf, <a class="el" href="classirrpoly_1_1checker.html#a25a9fc7a0838e9441f0d8efac4ccbf91">callback_func</a> back, const bool strict=true)</td></tr>
+<tr class="memdesc:acc20c7913c9f213e3d10be0b393856d2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Основной цикл разделения работы на потоки. <br /></td></tr>
+<tr class="separator:acc20c7913c9f213e3d10be0b393856d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae2f767186d9060c993c0255d9cec527b"><td class="memItemLeft" align="right" valign="top"><a id="ae2f767186d9060c993c0255d9cec527b"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classirrpoly_1_1checker.html#ae2f767186d9060c993c0255d9cec527b">~checker</a> ()</td></tr>
+<tr class="memdesc:ae2f767186d9060c993c0255d9cec527b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Завершаем работу всех потоков. <br /></td></tr>
+<tr class="separator:ae2f767186d9060c993c0255d9cec527b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
+<a name="details" id="details"></a><h2 class="groupheader">Подробное описание</h2>
+<div class="textblock"><h3>template&lt;typename value_type, typename result_type&gt;<br />
+class irrpoly::checker&lt; value_type, result_type &gt;</h3>
+
+<p>Выполняет проверку на неприводимось и примитивность заданного многочлена над полем GF[P]. </p>
+</div><h2 class="groupheader">Определения типов</h2>
+<a id="a25a9fc7a0838e9441f0d8efac4ccbf91"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a25a9fc7a0838e9441f0d8efac4ccbf91">&#9670;&nbsp;</a></span>callback_func</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename value_type , typename result_type &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="classirrpoly_1_1checker.html">irrpoly::checker</a>&lt; value_type, result_type &gt;::<a class="el" href="classirrpoly_1_1checker.html#a25a9fc7a0838e9441f0d8efac4ccbf91">callback_func</a> =  std::function&lt;bool(const value_type &amp;, const result_type &amp;)&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Вид функции, обрабатывающей результат проверки (если многочлен удовлетворяет требуемым условиям возвращает true, иначе - false). </p>
+
+</div>
+</div>
+<hr/>Объявления и описания членов класса находятся в файле:<ul>
+<li>include/irrpoly/<a class="el" href="checker_8hpp_source.html">checker.hpp</a></li>
+</ul>
+</div><!-- contents -->
+<!-- start footer part -->
+<hr class="footer"/><address class="footer"><small>
+Документация по irrpoly. Последние изменения: Вт 5 Май 2020 10:35:52. Создано системой &#160;<a href="http://www.doxygen.org/index.html">
+<img class="footer" src="doxygen.png" alt="doxygen"/>
+</a> 1.8.18
+</small></address>
+</body>
+</html>

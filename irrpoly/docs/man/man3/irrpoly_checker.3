@@ -1,0 +1,56 @@
+.TH "irrpoly::checker< value_type, result_type >" 3 "Вт 5 Май 2020" "Version 2.1.0" "irrpoly" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+irrpoly::checker< value_type, result_type > \- Выполняет проверку на неприводимось и примитивность заданного многочлена над полем GF[P]\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <checker\&.hpp>\fP
+.SS "Открытые типы"
+
+.in +1c
+.ti -1c
+.RI "using \fBinput_func\fP = std::function< value_type()>"
+.br
+.RI "Вид функции, генерирующей многочлены для проверки\&. "
+.ti -1c
+.RI "using \fBcheck_func\fP = std::function< void(const value_type &, std::optional< result_type > &)>"
+.br
+.RI "Вид функции, выполняющей проверку и сохраняющей результат\&. "
+.ti -1c
+.RI "using \fBcallback_func\fP = std::function< bool(const value_type &, const result_type &)>"
+.br
+.in -1c
+.SS "Открытые члены"
+
+.in +1c
+.ti -1c
+.RI "\fBchecker\fP (unsigned n=std::thread::hardware_concurrency())"
+.br
+.ti -1c
+.RI "void \fBcheck\fP (uint64_t n, \fBinput_func\fP in, \fBcheck_func\fP cf, \fBcallback_func\fP back, const bool strict=true)"
+.br
+.RI "Основной цикл разделения работы на потоки\&. "
+.ti -1c
+.RI "\fB~checker\fP ()"
+.br
+.RI "Завершаем работу всех потоков\&. "
+.in -1c
+.SH "Подробное описание"
+.PP 
+
+.SS "template<typename value_type, typename result_type>
+.br
+class irrpoly::checker< value_type, result_type >"
+Выполняет проверку на неприводимось и примитивность заданного многочлена над полем GF[P]\&. 
+.SH "Определения типов"
+.PP 
+.SS "template<typename value_type , typename result_type > using \fBirrpoly::checker\fP< value_type, result_type >::\fBcallback_func\fP =  std::function<bool(const value_type &, const result_type &)>"
+Вид функции, обрабатывающей результат проверки (если многочлен удовлетворяет требуемым условиям возвращает true, иначе - false)\&. 
+
+.SH "Автор"
+.PP 
+Автоматически создано Doxygen для irrpoly из исходного текста\&.

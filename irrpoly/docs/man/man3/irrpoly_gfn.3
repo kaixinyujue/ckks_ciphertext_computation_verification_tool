@@ -1,0 +1,160 @@
+.TH "irrpoly::gfn" 3 "Sun Jun 21 2020" "Version 2.3.0" "irrpoly" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+irrpoly::gfn
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <gf\&.hpp>\fP
+.SS "Public Member Functions"
+
+.in +1c
+.ti -1c
+.RI "auto \fBvalue\fP () const \-> uintmax_t"
+.br
+.ti -1c
+.RI "\fBgfn\fP (const \fBgf\fP &field)"
+.br
+.ti -1c
+.RI "\fBgfn\fP (const \fBgf\fP &field, const uintmax_t val)"
+.br
+.ti -1c
+.RI "\fBgfn\fP (const \fBgfn\fP &other)=default"
+.br
+.ti -1c
+.RI "\fBgfn\fP (\fBgfn\fP &&other)=default"
+.br
+.ti -1c
+.RI "auto \fBoperator=\fP (const \fBgfn\fP &other) \-> \fBgfn\fP &"
+.br
+.ti -1c
+.RI "auto \fBbase\fP () const \-> uintmax_t"
+.br
+.ti -1c
+.RI "auto \fBoperator=\fP (const uintmax_t other) \-> \fBgfn\fP &"
+.br
+.ti -1c
+.RI "auto \fBfield\fP () const \-> const \fBgf\fP &"
+.br
+.ti -1c
+.RI "auto \fBoperator+\fP () const \-> \fBgfn\fP"
+.br
+.ti -1c
+.RI "auto \fBoperator+\fP (const \fBgfn\fP &other) const \-> \fBgfn\fP"
+.br
+.ti -1c
+.RI "auto \fBoperator+\fP (const uintmax_t other) const \-> \fBgfn\fP"
+.br
+.ti -1c
+.RI "auto \fBoperator+=\fP (const \fBgfn\fP &other) \-> \fBgfn\fP &"
+.br
+.ti -1c
+.RI "auto \fBoperator+=\fP (const uintmax_t other) \-> \fBgfn\fP"
+.br
+.ti -1c
+.RI "auto \fBoperator++\fP () \-> \fBgfn\fP &"
+.br
+.ti -1c
+.RI "auto \fBoperator++\fP (int) &\-> \fBgfn\fP"
+.br
+.ti -1c
+.RI "auto \fBoperator\-\fP () const \-> \fBgfn\fP"
+.br
+.ti -1c
+.RI "auto \fBoperator\-\fP (const \fBgfn\fP &other) const \-> \fBgfn\fP"
+.br
+.ti -1c
+.RI "auto \fBoperator\-\fP (const uintmax_t other) const \-> \fBgfn\fP"
+.br
+.ti -1c
+.RI "auto \fBoperator\-=\fP (const \fBgfn\fP &other) \-> \fBgfn\fP &"
+.br
+.ti -1c
+.RI "auto \fBoperator\-=\fP (const uintmax_t other) \-> \fBgfn\fP"
+.br
+.ti -1c
+.RI "auto \fBoperator\-\-\fP () \-> \fBgfn\fP &"
+.br
+.ti -1c
+.RI "auto \fBoperator\-\-\fP (int) &\-> \fBgfn\fP"
+.br
+.ti -1c
+.RI "auto \fBoperator*\fP (const \fBgfn\fP &other) const \-> \fBgfn\fP"
+.br
+.ti -1c
+.RI "auto \fBoperator*\fP (const uintmax_t other) const \-> \fBgfn\fP"
+.br
+.ti -1c
+.RI "auto \fBoperator*=\fP (const \fBgfn\fP &other) \-> \fBgfn\fP &"
+.br
+.ti -1c
+.RI "auto \fBoperator*=\fP (const uintmax_t other) \-> \fBgfn\fP"
+.br
+.ti -1c
+.RI "auto \fBmul_inv\fP () \-> \fBgfn\fP"
+.br
+.ti -1c
+.RI "auto \fBoperator/\fP (const \fBgfn\fP &other) const \-> \fBgfn\fP"
+.br
+.ti -1c
+.RI "auto \fBoperator/\fP (const uintmax_t other) const \-> \fBgfn\fP"
+.br
+.ti -1c
+.RI "auto \fBoperator/=\fP (const \fBgfn\fP &other) \-> \fBgfn\fP &"
+.br
+.ti -1c
+.RI "auto \fBoperator/=\fP (const uintmax_t other) \-> \fBgfn\fP"
+.br
+.ti -1c
+.RI "auto \fBis_zero\fP () const \-> bool"
+.br
+.ti -1c
+.RI "\fBoperator bool\fP () const"
+.br
+.in -1c
+.SS "Static Public Member Functions"
+
+.in +1c
+.ti -1c
+.RI "static auto \fBrandom\fP (const \fBgf\fP &field) \-> \fBgfn\fP"
+.br
+.in -1c
+.SS "Friends"
+
+.in +1c
+.ti -1c
+.RI "auto \fBoperator+\fP (uintmax_t, const \fBgfn\fP &) \-> \fBgfn\fP"
+.br
+.ti -1c
+.RI "auto \fBoperator\-\fP (uintmax_t, const \fBgfn\fP &) \-> \fBgfn\fP"
+.br
+.ti -1c
+.RI "auto \fBoperator*\fP (uintmax_t, const \fBgfn\fP &) \-> \fBgfn\fP"
+.br
+.ti -1c
+.RI "auto \fBoperator/\fP (uintmax_t, const \fBgfn\fP &) \-> \fBgfn\fP"
+.br
+.ti -1c
+.RI "template<class charT , class traits > auto \fBoperator<<\fP (std::basic_ostream< charT, traits > &, const \fBgfn\fP &) \-> std::basic_ostream< charT, traits > &"
+.br
+.ti -1c
+.RI "template<class charT , class traits > auto \fBoperator>>\fP (std::basic_istream< charT, traits > &, \fBgfn\fP &) \-> std::basic_istream< charT, traits > &"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+gfn type represents number in GF[P]\&. The number is always within 0 and P-1\&. 
+.SH "Member Function Documentation"
+.PP 
+.SS "auto irrpoly::gfn::mul_inv () \-> \fBgfn\fP \fC [inline]\fP"
+Returns multiplicative inverse for current gfn instance\&. 
+.SS "auto irrpoly::gfn::operator/ (const \fBgfn\fP & other) const \-> \fBgfn\fP \fC [inline]\fP"
+Division is defined as multiplication by multiplicative inverse\&. 
+.SS "static auto irrpoly::gfn::random (const \fBgf\fP & field) \-> \fBgfn\fP \fC [inline]\fP, \fC [static]\fP"
+Generates a random number from range [0, P-1]\&. 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for irrpoly from the source code\&.

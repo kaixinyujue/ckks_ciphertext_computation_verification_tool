@@ -1,0 +1,55 @@
+.TH "checker< P >::control_type" 3 "Ср 13 Ноя 2019" "Version 1.0.0" "irrpoly" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+checker< P >::control_type \- Cлужебный класс, используется для выполнения проверки в несколько потоков\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <checker\&.hpp>\fP
+.PP
+Базовые классы:\fBdetail::sync\fP\&.
+.SS "Открытые члены"
+
+.in +1c
+.ti -1c
+.RI "\fBcontrol_type\fP (const typename \fBchecker\fP< P >::\fBirreducible_method\fP irr_meth, const typename \fBchecker\fP< P >::\fBprimitive_method\fP prim_meth, const unsigned threads_num) noexcept(false)"
+.br
+.ti -1c
+.RI "unsigned \fBcountBusy\fP ()"
+.br
+.RI "Считает, сколько потоков заняты\&. "
+.ti -1c
+.RI "void \fBwait_one\fP ()"
+.br
+.ti -1c
+.RI "void \fBwait_all\fP ()"
+.br
+.RI "Ждём завершения всех потоков "
+.ti -1c
+.RI "std::vector< \fBchecker\fP< P > * > & \fBcheckers\fP () noexcept"
+.br
+.in -1c
+.SH "Подробное описание"
+.PP 
+
+.SS "template<uint32_t P>
+.br
+class checker< P >::control_type"
+Cлужебный класс, используется для выполнения проверки в несколько потоков\&. 
+.SH "Конструктор(ы)"
+.PP 
+.SS "template<uint32_t P> \fBchecker\fP< P >::control_type::control_type (const typename \fBchecker\fP< P >::\fBirreducible_method\fP irr_meth, const typename \fBchecker\fP< P >::\fBprimitive_method\fP prim_meth, const unsigned threads_num)\fC [inline]\fP, \fC [noexcept]\fP"
+Инициализация мьютекса и условной переменной, создание требуемого числа потоков и хранилищ данных\&. На выходе мьютекс находится в состоянии locked, все потоки запущены и находятся в состоянии detached\&. 
+.SH "Методы"
+.PP 
+.SS "template<uint32_t P> std::vector<\fBchecker\fP<P> *>& \fBchecker\fP< P >::control_type::checkers ()\fC [inline]\fP, \fC [noexcept]\fP"
+Возвращает структуры, хранящие все данные потока: проверяемый многочлен, текущее состояение потока и результат проверки многочлена\&. 
+.SS "template<uint32_t P> void \fBchecker\fP< P >::control_type::wait_one ()\fC [inline]\fP"
+Если все потоки заняты - ожидаем пока появится свободный, иначе управление сразу возвращается вызывающей функции\&. 
+
+.SH "Автор"
+.PP 
+Автоматически создано Doxygen для irrpoly из исходного текста\&.
