@@ -1028,7 +1028,8 @@ int main(int argc,char** argv){
 
     std::vector<std::vector<int>> coefficient, exp;
 
-    int Cipher_number = getCipherNum(compute_num, poly_type);
+    // int Cipher_number = getCipherNum(compute_num, poly_type);
+    int Cipher_number = 1 + std::stoi(compute_num);
 
     if(poly_type == add_sub){
         for(int i=0;i<Cipher_number;i++){

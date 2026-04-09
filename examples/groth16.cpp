@@ -35,7 +35,7 @@ typedef ringsnark::seal::EncodingElem E;
 
 
 std::string sl_path0;
-bool e_des;
+// bool e_des;
 
 class Circuit {
 public:
@@ -1407,9 +1407,9 @@ public:
             }
         }
 
-        if(e_des){
-            polys[index_for_output] = polys[0];
-        }
+        // if(e_des){
+        //     polys[index_for_output] = polys[0];
+        // }
 
         // int final_var_num = index;
         // cout << "exit: " << __FUNCTION__  << endl;
@@ -1729,21 +1729,21 @@ private:
     size_t ex_unfold;
 };
 
-void is_e_des(std::string filename){
-    if (std::filesystem::exists(filename)) {
-        e_des = true;
-    }
-}
+// void is_e_des(std::string filename){
+//     if (std::filesystem::exists(filename)) {
+//         e_des = true;
+//     }
+// }
 
-void clear_e_cache(std::string filename){
-    if (std::filesystem::exists(filename)) {
-        std::filesystem::remove(filename);
-    }
-}
+// void clear_e_cache(std::string filename){
+//     if (std::filesystem::exists(filename)) {
+//         std::filesystem::remove(filename);
+//     }
+// }
 
 int e_steps(string e02e, string save_path) {
-    e_des = false;
-    is_e_des("e_test.txt");
+    // e_des = false;
+    // is_e_des("e_test.txt");
 
     //params
     EncryptionParameters params(scheme_type::ckks);
@@ -1807,7 +1807,7 @@ int e_steps(string e02e, string save_path) {
     cout << "R1CS satisfied: " << std::boolalpha << pb.is_satisfied() << endl;
     cout << endl;
 
-    cout << "=== Rinocchio ===" << endl;
+    cout << "=== Groth16 ===" << endl;
     clock_t generator_begin = clock();
     auto keypair =ringsnark::rinocchio::generator<R, E>(pb.get_constraint_system());
     clock_t generator_finish = clock();
@@ -2000,18 +2000,22 @@ string retainNumbers(string str) {
 
 typedef struct Setup_output{
     SEALContext context;
-    ringsnark::rinocchio::proving_key<R, E> pk;
-    ringsnark::rinocchio::verification_key<R, E> vk;
+    ringsnark::groth16::proving_key<R, E> pk;
+    ringsnark::groth16::verification_key<R, E> vk;
     ringsnark::protoboard<R> pb;
     Circuit circuit;
     double setup_time;
 }SetupOut;
 
 typedef struct Prove_output{
-    ringsnark::rinocchio::proof<R, E> proof;
+    ringsnark::groth16::proof<R, E> proof;
     r1cs_primary_input<R> pm;
     double prove_time;
 }ProveOut;
+
+typedef struct Aggproof_output{
+    ringsnark::rinocchio::proof<R, E> proof;
+}AggedProof;
 
 SetupOut Setup(int poly_modulus_degree, double scale, vector<vector<size_t>> coefficient, vector<vector<size_t>> exp, vector<vector<size_t>> aj){
     //加密方案用的params
@@ -2063,9 +2067,9 @@ SetupOut Setup(int poly_modulus_degree, double scale, vector<vector<size_t>> coe
     cout << "R1CS satisfied: " << std::boolalpha << pb.is_satisfied() << endl;
     cout << endl;
     
-    cout << "=== Rinocchio ===" << endl;
+    cout << "=== Groth16 ===" << endl;
     clock_t generator_begin = clock();
-    auto keypair =ringsnark::rinocchio::generator<R, E>(pb.get_constraint_system());
+    auto keypair = ringsnark::groth16::generator<R, E>(pb.get_constraint_system());
     clock_t generator_finish = clock();
     cout << "Size of pk:\t" << keypair.pk.size_in_bits() << " bits" << endl;
     cout << "Size of vk:\t" << keypair.vk.size_in_bits() << " bits" << endl;
@@ -2080,41 +2084,21 @@ SetupOut Setup(int poly_modulus_degree, double scale, vector<vector<size_t>> coe
     return output0;
 }
 
-Circuit Comute(SEALContext context, Circuit circuit, vector<unsigned long long> &data, size_t ii, size_t n_comp, string type){
-    vector<unsigned long long> da;
-    size_t relnKidx = data.size()/Inner_N - 2;
+Circuit Comute(SEALContext context, Circuit circuit, vector<unsigned long long> &data){
 
-    if(type=="-m"){
-        da.resize(Inner_N*15);
-        vector<size_t> idxs = get_md_idxs(ii,n_comp);
-        idx2poly(data, idxs[0], 2, da, 0);
-        idx2poly(data, idxs[1], 2, da, 2);
-        idx2poly(data, idxs[2], 7, da, 6);
-        idx2poly(data, idxs[3], 2, da, 4);
-        idx2poly(data, relnKidx, 2, da, 13);
-    }
-    else{
-        da.resize(Inner_N*8);
-        vector<size_t> idxs = get_as_idxs(ii,n_comp);
-        idx2poly(data, idxs[0], 2, da, 0);
-        idx2poly(data, idxs[1], 2, da, 2);
-        idx2poly(data, idxs[2], 2, da, 4);
-        idx2poly(data, relnKidx, 2, da, 6);
-    }
-
-    circuit.copy_polys_from_A(da, context);
+    circuit.copy_polys_from_A(data, context);
 
     // cout << "poly compute"<<  endl;
 
     return circuit;
 }
 
-ProveOut Prove(ringsnark::protoboard<R> pb, Circuit circuit, ringsnark::rinocchio::proving_key<R, E> pk){
+ProveOut Prove(ringsnark::protoboard<R> pb, Circuit circuit, ringsnark::groth16::proving_key<R, E> pk){
     clock_t poly_compute_finish = clock();
 
     circuit.generate_r1cs_witness(pb);
 
-    auto proof = ringsnark::rinocchio::prover(pk, pb.primary_input(), pb.auxiliary_input());
+    auto proof = ringsnark::groth16::prover(pk, pb.primary_input(), pb.auxiliary_input());
     clock_t prover_finish = clock();
     // cout << "Size of proof:\t" << proof.size_in_bits() << " bits" << endl;
 
@@ -2126,10 +2110,10 @@ ProveOut Prove(ringsnark::protoboard<R> pb, Circuit circuit, ringsnark::rinocchi
     return output;
 }
 
-bool Verify(ringsnark::rinocchio::verification_key<R, E> vk, r1cs_primary_input<R> pm, ringsnark::rinocchio::proof<R, E> proof, double &verify_time){
+bool Verify(ringsnark::groth16::verification_key<R, E> vk, r1cs_primary_input<R> pm, ringsnark::groth16::proof<R, E> proof, double &verify_time){
     clock_t prover_finish = clock();
 
-    bool verif = ringsnark::rinocchio::verifier(vk, pm, proof);
+    bool verif = ringsnark::groth16::verifier(vk, pm, proof);
     clock_t verify_finish = clock();
 
     // cout << "Verification passed: " << std::boolalpha << verif << endl;
@@ -2572,56 +2556,35 @@ ringsnark::rinocchio::proof<R, E> LoadOnePF(size_t pvnum, SEALContext &context){
     return pf;
 }
 
-void load_verify_only(string poly_type, string filenameA, string filenameB){
-    double vfTime = 0;
-    bool verif = false;
+double pseudo_random_oracle(size_t input) {
+    std::hash<size_t> hasher;
+    size_t hash_value = hasher(input);
 
-    SEALContext lct = creat_context(ModulusDegree);
-    R::set_context(lct);
-    E::set_context(ModulusDegree * 2);
+    // hash 值映射到 [0, 1)
+    return static_cast<double>(hash_value % 1000000000) / 1000000000.0;
+}
 
-    size_t lsa = loadSizet(sl_path0 + "/", "samp.bin");
+R my_random_oracle(size_t input, double scale, SEALContext &context){
+    auto encoder = CKKSEncoder(context);
+    Plaintext ptxt;
+    double x = pseudo_random_oracle(input);
+    encoder.encode(x, scale, ptxt);
+    polytools::SealPoly p0 = polytools::SealPoly(context, ptxt);
+    R res = R(p0);
+    return res;
+}
 
-    for(size_t j=0;j<lsa;j++){
-        string istr = std::to_string(j);
-        size_t k = loadSizet(sl_path0 + "/pv" + istr + "/", "sak.bin");
-        double vfTtmp;
-        ringsnark::rinocchio::verification_key<R, E> vkl0 = LoadOneVK(j, lct);
-        ringsnark::r1cs_primary_input<R> pml0 = LoadOnePM(j, lct);
-        ringsnark::rinocchio::proof<R, E> pfl0 = LoadOnePF(j, lct);
+vector<R> random_oracle_vec(vector<size_t> &seeds, SEALContext &context){
+    double scale = pow(2.0, S_P);
+    size_t size = seeds.size();
+    vector<R> res(size);
 
-        verif = Verify(vkl0, pml0, pfl0, vfTtmp);
-        vfTime += vfTtmp;
-        cout << "verify"<<k<<" time:\t" << vfTtmp << "s" << endl;
-        cout << "verify"<<k<<" passed:\t" << std::boolalpha << verif << endl;
-
-        if(!verif){
-            cout<<"-----------------------------------verify false: "<<k<<endl;
-            // break;
-        }
+    #pragma omp parallel for default(none) shared(res, seeds, size, scale, context)
+    for(size_t i=0;i<size;i++){
+        res[i] = my_random_oracle(seeds[i], scale, context);
     }
 
-    cout << "verify time is:\t" << vfTime <<"s"<< endl;
-    cout << "Verification passed: " << std::boolalpha << verif << endl;
-
-
-    std::ofstream outFile(filenameB, std::ios::app);
-    if (!outFile) {
-        std::cout << "无法打开文件"<<filenameB<<"进行写入。" << std::endl;
-    }
-
-    outFile<<"================================================="<<endl;
-    outFile<< "Operation type:\t" << poly_type << endl;
-    outFile<< "Calculate scale:\t" << retainNumbers(filenameA) << endl;
-    outFile<< "scale=\t2^" << S_P << endl;
-
-    outFile<< "verify time is:\t"<< vfTime <<"s"<<endl;
-    outFile<< "Verification passed: " << std::boolalpha << verif << endl;
-    outFile<<endl<<endl;
-    
-    outFile.close();
-
-    cout << "The verification log has been stored in file: " << filenameB << endl;
+    return res;
 }
 
 int main(int argc,char** argv) {
@@ -2635,12 +2598,12 @@ int main(int argc,char** argv) {
     std::string natural_base = "-e";
 
     if(poly_type==natural_base){
-        if(argc>4){
-            std::string ag4 = argv[4];
-            if(ag4=="clear_e"){
-                clear_e_cache("e_test.txt");
-            }
-        }
+        // if(argc>4){
+        //     std::string ag4 = argv[4];
+        //     if(ag4=="clear_e"){
+        //         clear_e_cache("e_test.txt");
+        //     }
+        // }
         int res = e_steps(filenameA, filenameB);
         return res;
     }
@@ -2653,45 +2616,25 @@ int main(int argc,char** argv) {
     // cout<<"data_size: "<<(data.size()/Inner_N)<<endl;
     size_t n_comp = getNfromA(data.size(), poly_type);
     // cout<<"n_comp: "<<n_comp<<endl;
+    size_t Cipher_number = 1 + n_comp;
 
     if(poly_type == add_sub){
-        coefficient = {{0}, {1}};
-        exp = {{1}, {1}};
+        for(size_t i=0;i<Cipher_number;i++){
+            coefficient.push_back({i});
+            exp.push_back({1});
+        }
+        // coefficient = {{0}, {1}};
+        // exp = {{1}, {1}};
         sl_path0 = "vbuff/a" + retainNumbers(filenameA);
     }else if(poly_type == mul_div){
-        coefficient = {{0, 1}};
-        exp = {{1, 1}};
+        coefficient = {{0}};
+        exp = {{Cipher_number}};
+        // coefficient = {{0, 1}};
+        // exp = {{1, 1}};
         sl_path0 = "vbuff/m" + retainNumbers(filenameA);
     }else{
         std::cout<<"Illegal input!"<<std::endl;
         return 1;
-    }
-
-    bool clearF = true;
-    if(argc>4){
-        std::string ag4 = argv[4];
-        for (char &c : ag4) {
-            c = std::tolower(static_cast<unsigned char>(c));
-        }
-        if(ag4=="usebuff"){
-            clearF = false;
-        }
-    }
-    if(clearF){
-        std::filesystem::path buff_path = "vbuff";
-        if(std::filesystem::exists(buff_path) && std::filesystem::is_directory(buff_path)){
-            try {
-                std::filesystem::remove_all(buff_path);
-            } catch (const std::filesystem::filesystem_error& e) {
-                std::cerr << "file is occupied, " << e.what() << std::endl;
-            }
-        }
-    }
-
-    std::filesystem::path dir_path = sl_path0;
-    if(std::filesystem::exists(dir_path) && std::filesystem::is_directory(dir_path)){
-        load_verify_only(poly_type, filenameA, filenameB);
-        return 0;
     }
 
     size_t pfSize = 0;
@@ -2704,63 +2647,28 @@ int main(int argc,char** argv) {
     size_t pkSize = output1.pk.size_in_bits();
     size_t vkSize = output1.vk.size_in_bits();
 
-    size_t samp = getSampNum(n_comp, retainNumbers(filenameA), poly_type);
+    // size_t samp = getSampNum(n_comp, retainNumbers(filenameA), poly_type);
+    size_t samp = n_comp;
+    // saveSizet(samp, sl_path0 + "/", "samp.bin");
 
-    saveSizet(samp, sl_path0 + "/", "samp.bin");
-
-    // size_t samp = n_comp;
-    std::uniform_int_distribution<> dis(0, n_comp-1);
-
-    // SEALContext lct = creat_context(4096);
-
+    // std::uniform_int_distribution<> dis(0, n_comp-1);
+    cout<<"n_comp: "<<n_comp<<endl;
+    
     int afalse_fl = 0;
 
-    for(int i=0;i<samp;i++){
-        
 
-        std::mt19937 gen(time(0));
-        size_t k = dis(gen);
-        // int k = 0;
-        Circuit circuit = Comute(output1.context, output1.circuit, data, k, n_comp, poly_type);
-    
-        ProveOut proof1 = Prove(output1.pb, circuit, output1.pk);
-        pfSize += proof1.proof.size_in_bits();
-        pfTime += proof1.prove_time;
-        cout << "proof"<<k<<" size:\t" << proof1.proof.size_in_bits() << " bits" << endl;
-        cout << "proof"<<k<<" time:\t" << proof1.prove_time << "s" << endl;
+    // std::mt19937 gen(time(0));
+    // size_t k = dis(gen);
+    Circuit circuit = Comute(output1.context, output1.circuit, data);
+
+    ProveOut proof1 = Prove(output1.pb, circuit, output1.pk);
+    pfSize += proof1.proof.size_in_bits();
+    pfTime += proof1.prove_time;
+    cout << "proof size:\t" << proof1.proof.size_in_bits() << " bits" << endl;
+    cout << "proof time:\t" << proof1.prove_time << "s" << endl;
 
 
-        string istr = std::to_string(i);
-        saveSizet(k, sl_path0 + "/pv" + istr + "/", "sak.bin");
-
-        SaveOneVK(output1.vk, i);
-        SaveOnePM(proof1.pm, i);
-        SaveOnePF(proof1.proof, i);
-
-
-        double vfTtmp;
-        // ringsnark::rinocchio::verification_key<R, E> vkl0 = LoadOneVK(i, lct);
-        // ringsnark::r1cs_primary_input<R> pml0 = LoadOnePM(i, lct);
-        // ringsnark::rinocchio::proof<R, E> pfl0 = LoadOnePF(i, lct);
-
-        verif = Verify(output1.vk, proof1.pm, proof1.proof, vfTtmp);
-        vfTime += vfTtmp;
-        cout << "verify"<<k<<" time:\t" << vfTtmp << "s" << endl;
-        if(verif){
-            cout << "verify"<<k<<" passed:\t" << std::boolalpha << verif << endl;
-        }
-
-        if(!verif){
-            afalse_fl++;
-            if(afalse_fl>=5){
-                break;
-            }
-        }
-    }
-
-    if(afalse_fl>0){
-        verif = false;
-    }
+    verif = Verify(output1.vk, proof1.pm, proof1.proof, vfTime);
 
 
     cout << "Size of proof:\t" << pfSize << " bits" << endl;
@@ -2775,7 +2683,7 @@ int main(int argc,char** argv) {
         return 1;
     }
 
-    outFile<<"================================================="<<endl;
+    outFile<<"====================groth16======================"<<endl;
     outFile<< "Operation type:\t" << poly_type << endl;
     outFile<< "Calculate scale:\t" << retainNumbers(filenameA) << endl;
     outFile<< "scale=\t2^" << S_P << endl;

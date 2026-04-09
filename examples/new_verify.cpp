@@ -35,7 +35,7 @@ typedef ringsnark::seal::EncodingElem E;
 
 
 std::string sl_path0;
-bool e_des;
+// bool e_des;
 
 class Circuit {
 public:
@@ -1407,9 +1407,9 @@ public:
             }
         }
 
-        if(e_des){
-            polys[index_for_output] = polys[0];
-        }
+        // if(e_des){
+        //     polys[index_for_output] = polys[0];
+        // }
 
         // int final_var_num = index;
         // cout << "exit: " << __FUNCTION__  << endl;
@@ -1729,21 +1729,21 @@ private:
     size_t ex_unfold;
 };
 
-void is_e_des(std::string filename){
-    if (std::filesystem::exists(filename)) {
-        e_des = true;
-    }
-}
+// void is_e_des(std::string filename){
+//     if (std::filesystem::exists(filename)) {
+//         e_des = true;
+//     }
+// }
 
-void clear_e_cache(std::string filename){
-    if (std::filesystem::exists(filename)) {
-        std::filesystem::remove(filename);
-    }
-}
+// void clear_e_cache(std::string filename){
+//     if (std::filesystem::exists(filename)) {
+//         std::filesystem::remove(filename);
+//     }
+// }
 
 int e_steps(string e02e, string save_path) {
-    e_des = false;
-    is_e_des("e_test.txt");
+    // e_des = false;
+    // is_e_des("e_test.txt");
 
     //params
     EncryptionParameters params(scheme_type::ckks);
@@ -1807,7 +1807,7 @@ int e_steps(string e02e, string save_path) {
     cout << "R1CS satisfied: " << std::boolalpha << pb.is_satisfied() << endl;
     cout << endl;
 
-    cout << "=== Rinocchio ===" << endl;
+    cout << "=== F_Ring ===" << endl;
     clock_t generator_begin = clock();
     auto keypair =ringsnark::rinocchio::generator<R, E>(pb.get_constraint_system());
     clock_t generator_finish = clock();
@@ -2013,6 +2013,10 @@ typedef struct Prove_output{
     double prove_time;
 }ProveOut;
 
+typedef struct Aggproof_output{
+    ringsnark::rinocchio::proof<R, E> proof;
+}AggedProof;
+
 SetupOut Setup(int poly_modulus_degree, double scale, vector<vector<size_t>> coefficient, vector<vector<size_t>> exp, vector<vector<size_t>> aj){
     //加密方案用的params
     EncryptionParameters params(scheme_type::ckks);
@@ -2063,7 +2067,7 @@ SetupOut Setup(int poly_modulus_degree, double scale, vector<vector<size_t>> coe
     cout << "R1CS satisfied: " << std::boolalpha << pb.is_satisfied() << endl;
     cout << endl;
     
-    cout << "=== Rinocchio ===" << endl;
+    cout << "=== F_Ring ===" << endl;
     clock_t generator_begin = clock();
     auto keypair =ringsnark::rinocchio::generator<R, E>(pb.get_constraint_system());
     clock_t generator_finish = clock();
@@ -2086,7 +2090,7 @@ Circuit Comute(SEALContext context, Circuit circuit, vector<unsigned long long> 
 
     if(type=="-m"){
         da.resize(Inner_N*15);
-        vector<size_t> idxs = get_md_idxs(ii,n_comp);
+        vector<size_t> idxs = get_md_idxs(ii, n_comp);
         idx2poly(data, idxs[0], 2, da, 0);
         idx2poly(data, idxs[1], 2, da, 2);
         idx2poly(data, idxs[2], 7, da, 6);
@@ -2095,7 +2099,7 @@ Circuit Comute(SEALContext context, Circuit circuit, vector<unsigned long long> 
     }
     else{
         da.resize(Inner_N*8);
-        vector<size_t> idxs = get_as_idxs(ii,n_comp);
+        vector<size_t> idxs = get_as_idxs(ii, n_comp);
         idx2poly(data, idxs[0], 2, da, 0);
         idx2poly(data, idxs[1], 2, da, 2);
         idx2poly(data, idxs[2], 2, da, 4);
@@ -2624,6 +2628,205 @@ void load_verify_only(string poly_type, string filenameA, string filenameB){
     cout << "The verification log has been stored in file: " << filenameB << endl;
 }
 
+double pseudo_random_oracle(size_t input) {
+    std::hash<size_t> hasher;
+    size_t hash_value = hasher(input);
+
+    // hash 值映射到 [0, 1)
+    return static_cast<double>(hash_value % 1000000000) / 1000000000.0;
+}
+
+vector<double> pseudo_random_oracleVec(size_t input){
+    size_t slot_count = ModulusDegree/2;
+    vector<double> res(slot_count);
+    for(size_t i=0;i<slot_count;i++){
+        res[i] = pseudo_random_oracle(input+i);
+    }
+    return res;
+}
+
+R my_random_oracle(size_t input, double scale, SEALContext &context){
+    auto encoder = CKKSEncoder(context);
+    size_t slot_count = encoder.slot_count();
+    if(slot_count != ModulusDegree/2){
+        cout<<"slot_count error-------------------------------------"<<endl;
+    }
+    
+    polytools::SealPoly p0(context);
+    Plaintext ptxt;
+    double x = pseudo_random_oracle(input);
+    // vector<double> xs = pseudo_random_oracleVec(input);
+    encoder.encode(x, scale, ptxt);
+    p0 = polytools::SealPoly(context, ptxt);
+    // cout<<"p0_is_NTT:"<<p0.is_ntt_form() <<"  in "<<input<<endl;
+    if(!p0.is_ntt_form()){
+        auto poly_parms_id = p0.get_parms_id();
+        const auto &context_data = *context.get_context_data(poly_parms_id);
+        const auto *ntt_tables = context_data.small_ntt_tables();
+        p0.ntt_inplace(ntt_tables);
+    }
+    // cout<<"p0_is_NTT:"<<p0.is_ntt_form() <<"  mustTrue  in "<<input<<endl;
+    R res = R(p0);
+    return res;
+}
+
+vector<R> random_oracle_vec(vector<size_t> &seeds, SEALContext &context){
+    double scale = pow(2.0, S_P);
+    size_t size = seeds.size();
+    vector<R> res(size);
+
+    #pragma omp parallel for default(none) shared(res, seeds, size, scale, context)
+    for(size_t i=0;i<size;i++){
+        res[i] = my_random_oracle(seeds[i], scale, context);
+        // cout<<"r"<<i<<endl;
+    }
+
+    return res;
+}
+
+ringsnark::rinocchio::proof<R, E> AggregateProve(SetupOut setout, vector<ProveOut> &pos){
+    size_t length_po = pos.size();
+    size_t r0 = length_po >> 1;
+    array<E, 2> ap = ringsnark::rinocchio::aggsingleproof(setout.vk, pos[0].pm, pos[0].proof);
+    array<E, 2> rp = ringsnark::rinocchio::aggsingleproof(setout.vk, pos[r0].pm, pos[r0].proof);
+    E aggA = ap[0];
+    E aggB = rp[0];
+    E aggC = ap[1];
+    E aggD = rp[1];
+
+    for(size_t i=1;i<length_po;i++){
+        array<E, 2> pt = ringsnark::rinocchio::aggsingleproof(setout.vk, pos[i].pm, pos[i].proof);
+        aggA += pt[0];
+        aggC += pt[1];
+    }
+
+    return ringsnark::rinocchio::proof<R, E>(aggA, aggB, aggC, aggD);
+}
+
+ringsnark::rinocchio::proof<R, E> AggregateProve_r(SetupOut setout, vector<ProveOut> &pos, vector<size_t> &seeds, SEALContext &context){
+    vector<R> rs = random_oracle_vec(seeds, context);
+
+    size_t length_po = pos.size();
+    size_t r0 = length_po >> 1;
+    array<E, 2> ap = ringsnark::rinocchio::agg_ro_proof(setout.vk, pos[0].pm, pos[0].proof, rs[0]);
+    array<E, 2> rp = ringsnark::rinocchio::agg_ro_proof(setout.vk, pos[r0].pm, pos[r0].proof, rs[r0]);
+    E aggA = ap[0];
+    E aggB = rp[0];
+    E aggC = ap[1];
+    E aggD = rp[1];
+
+    for(size_t i=1;i<length_po;i++){
+        array<E, 2> pt = ringsnark::rinocchio::agg_ro_proof(setout.vk, pos[i].pm, pos[i].proof, rs[i]);
+        aggA += pt[0];
+        aggC += pt[1];
+    }
+
+    return ringsnark::rinocchio::proof<R, E>(aggA, aggB, aggC, aggD);
+}
+
+ringsnark::rinocchio::proof<R, E> AggLogProve(SetupOut setout, vector<ProveOut> &pos){
+    size_t length_po = pos.size();
+    size_t r0 = length_po >> 1;
+    array<E, 2> rp = ringsnark::rinocchio::aggsingleproof(setout.vk, pos[r0].pm, pos[r0].proof);
+    E aggB = rp[0];
+    E aggD = rp[1];
+
+    size_t n0 = (length_po + 1) / 2;
+    vector<array<E, 2>> aps(n0);
+    ringsnark::rinocchio::verification_key<R, E> vk = setout.vk;
+
+    // cout<<"agg debug1"<<endl;
+
+    #pragma omp parallel for default(none) shared(aps, vk, pos, length_po, r0)
+    for(size_t i=0;i<r0;i++){
+        size_t add_idx = length_po - i - 1;
+        aps[i] = ringsnark::rinocchio::aggsingleproof(vk, pos[i].pm, pos[i].proof);
+        array<E, 2> pt = ringsnark::rinocchio::aggsingleproof(vk, pos[add_idx].pm, pos[add_idx].proof);
+        aps[i][0] += pt[0];
+        aps[i][1] += pt[1];
+    }
+
+    // cout<<"agg debug2"<<endl;
+
+    if(r0 < n0){
+        aps[n0-1] = ringsnark::rinocchio::aggsingleproof(vk, pos[r0].pm, pos[r0].proof);
+    }
+
+    // cout<<"agg debug3"<<endl;
+
+    size_t iaps_size = n0;
+    while(iaps_size>1){
+        size_t halfb = iaps_size >> 1;
+        size_t half = (iaps_size + 1) / 2;
+
+        #pragma omp parallel for default(none) shared(aps, halfb, iaps_size)
+        for(size_t i=0;i<halfb;i++){
+            aps[i][0] += aps[iaps_size-i-1][0];
+            aps[i][1] += aps[iaps_size-i-1][1];
+        }
+
+        iaps_size = half;
+    }
+    // cout<<"agg debug4"<<endl;
+
+    E aggA = aps[0][0];
+    E aggC = aps[0][1];
+
+    return ringsnark::rinocchio::proof<R, E>(aggA, aggB, aggC, aggD);
+}
+
+ringsnark::rinocchio::proof<R, E> AggLogProve_r(SetupOut setout, vector<ProveOut> &pos, vector<size_t> &seeds, SEALContext &context){
+    vector<R> rs = random_oracle_vec(seeds, context);
+
+    size_t length_po = pos.size();
+    size_t r0 = length_po >> 1;
+    array<E, 2> rp = ringsnark::rinocchio::agg_ro_proof(setout.vk, pos[r0].pm, pos[r0].proof, rs[r0]);
+    E aggB = rp[0];
+    E aggD = rp[1];
+
+    size_t n0 = (length_po + 1) / 2;
+    vector<array<E, 2>> aps(n0);
+    ringsnark::rinocchio::verification_key<R, E> vk = setout.vk;
+
+    // cout<<"agg debugr1"<<endl;
+
+    #pragma omp parallel for default(none) shared(aps, vk, pos, r0, length_po, rs)
+    for(size_t i=0;i<r0;i++){
+        size_t add_idx = length_po - i - 1;
+        aps[i] = ringsnark::rinocchio::agg_ro_proof(vk, pos[i].pm, pos[i].proof, rs[i]);
+        array<E, 2> pt = ringsnark::rinocchio::agg_ro_proof(vk, pos[add_idx].pm, pos[add_idx].proof, rs[add_idx]);
+        aps[i][0] += pt[0];
+        aps[i][1] += pt[1];
+    }
+
+    // cout<<"agg debug2"<<endl;
+
+    if(r0 < n0){
+        aps[n0-1] = ringsnark::rinocchio::agg_ro_proof(vk, pos[r0].pm, pos[r0].proof, rs[r0]);
+    }
+    // cout<<"agg debug3"<<endl;
+
+    size_t iaps_size = n0;
+    while(iaps_size>1){
+        size_t halfb = iaps_size >> 1;
+        size_t half = (iaps_size + 1) / 2;
+
+        #pragma omp parallel for default(none) shared(aps, halfb, iaps_size)
+        for(size_t i=0;i<halfb;i++){
+            aps[i][0] += aps[iaps_size-i-1][0];
+            aps[i][1] += aps[iaps_size-i-1][1];
+        }
+
+        iaps_size = half;
+    }
+    // cout<<"agg debug4"<<endl;
+
+    E aggA = aps[0][0];
+    E aggC = aps[0][1];
+
+    return ringsnark::rinocchio::proof<R, E>(aggA, aggB, aggC, aggD);
+}
+
 int main(int argc,char** argv) {
     std::string poly_type = argv[1];
     std::string filenameA = argv[2];
@@ -2635,12 +2838,12 @@ int main(int argc,char** argv) {
     std::string natural_base = "-e";
 
     if(poly_type==natural_base){
-        if(argc>4){
-            std::string ag4 = argv[4];
-            if(ag4=="clear_e"){
-                clear_e_cache("e_test.txt");
-            }
-        }
+        // if(argc>4){
+        //     std::string ag4 = argv[4];
+        //     if(ag4=="clear_e"){
+        //         clear_e_cache("e_test.txt");
+        //     }
+        // }
         int res = e_steps(filenameA, filenameB);
         return res;
     }
@@ -2667,32 +2870,32 @@ int main(int argc,char** argv) {
         return 1;
     }
 
-    bool clearF = true;
-    if(argc>4){
-        std::string ag4 = argv[4];
-        for (char &c : ag4) {
-            c = std::tolower(static_cast<unsigned char>(c));
-        }
-        if(ag4=="usebuff"){
-            clearF = false;
-        }
-    }
-    if(clearF){
-        std::filesystem::path buff_path = "vbuff";
-        if(std::filesystem::exists(buff_path) && std::filesystem::is_directory(buff_path)){
-            try {
-                std::filesystem::remove_all(buff_path);
-            } catch (const std::filesystem::filesystem_error& e) {
-                std::cerr << "file is occupied, " << e.what() << std::endl;
-            }
-        }
-    }
+    // bool clearF = true;
+    // if(argc>4){
+    //     std::string ag4 = argv[4];
+    //     for (char &c : ag4) {
+    //         c = std::tolower(static_cast<unsigned char>(c));
+    //     }
+    //     if(ag4=="usebuff"){
+    //         clearF = false;
+    //     }
+    // }
+    // if(clearF){
+    //     std::filesystem::path buff_path = "vbuff";
+    //     if(std::filesystem::exists(buff_path) && std::filesystem::is_directory(buff_path)){
+    //         try {
+    //             std::filesystem::remove_all(buff_path);
+    //         } catch (const std::filesystem::filesystem_error& e) {
+    //             std::cerr << "file is occupied, " << e.what() << std::endl;
+    //         }
+    //     }
+    // }
 
-    std::filesystem::path dir_path = sl_path0;
-    if(std::filesystem::exists(dir_path) && std::filesystem::is_directory(dir_path)){
-        load_verify_only(poly_type, filenameA, filenameB);
-        return 0;
-    }
+    // std::filesystem::path dir_path = sl_path0;
+    // if(std::filesystem::exists(dir_path) && std::filesystem::is_directory(dir_path)){
+    //     load_verify_only(poly_type, filenameA, filenameB);
+    //     return 0;
+    // }
 
     size_t pfSize = 0;
     double pfTime = 0;
@@ -2704,24 +2907,26 @@ int main(int argc,char** argv) {
     size_t pkSize = output1.pk.size_in_bits();
     size_t vkSize = output1.vk.size_in_bits();
 
-    size_t samp = getSampNum(n_comp, retainNumbers(filenameA), poly_type);
+    // size_t samp = getSampNum(n_comp, retainNumbers(filenameA), poly_type);
+    size_t samp = n_comp;
+    // saveSizet(samp, sl_path0 + "/", "samp.bin");
 
-    saveSizet(samp, sl_path0 + "/", "samp.bin");
 
-    // size_t samp = n_comp;
-    std::uniform_int_distribution<> dis(0, n_comp-1);
+    // std::uniform_int_distribution<> dis(0, n_comp-1);
 
-    // SEALContext lct = creat_context(4096);
 
+    cout<<"n_comp: "<<n_comp<<endl;
+    
     int afalse_fl = 0;
 
-    for(int i=0;i<samp;i++){
-        
+    vector<ProveOut> pos;
 
-        std::mt19937 gen(time(0));
-        size_t k = dis(gen);
-        // int k = 0;
-        Circuit circuit = Comute(output1.context, output1.circuit, data, k, n_comp, poly_type);
+    for(int i=0;i<samp;i++){
+        // std::mt19937 gen(time(0));
+        // size_t k = dis(gen);
+        size_t k = i+1;
+        // Circuit circuit = Comute(output1.context, output1.circuit, data, k, n_comp, poly_type);
+        Circuit circuit = Comute(output1.context, output1.circuit, data, i, n_comp, poly_type);
     
         ProveOut proof1 = Prove(output1.pb, circuit, output1.pk);
         pfSize += proof1.proof.size_in_bits();
@@ -2730,41 +2935,63 @@ int main(int argc,char** argv) {
         cout << "proof"<<k<<" time:\t" << proof1.prove_time << "s" << endl;
 
 
-        string istr = std::to_string(i);
-        saveSizet(k, sl_path0 + "/pv" + istr + "/", "sak.bin");
+        pos.push_back(proof1);
 
-        SaveOneVK(output1.vk, i);
-        SaveOnePM(proof1.pm, i);
-        SaveOnePF(proof1.proof, i);
+        // string istr = std::to_string(i);
+        // double vfTtmp;
+        // // ringsnark::rinocchio::verification_key<R, E> vkl0 = LoadOneVK(i, lct);
+        // // ringsnark::r1cs_primary_input<R> pml0 = LoadOnePM(i, lct);
+        // // ringsnark::rinocchio::proof<R, E> pfl0 = LoadOnePF(i, lct);
 
+        // verif = Verify(output1.vk, proof1.pm, proof1.proof, vfTtmp);
+        // vfTime += vfTtmp;
+        // cout << "verify"<<k<<" time:\t" << vfTtmp << "s" << endl;
+        // if(verif){
+        //     cout << "verify"<<k<<" passed:\t" << std::boolalpha << verif << endl;
+        // }
 
-        double vfTtmp;
-        // ringsnark::rinocchio::verification_key<R, E> vkl0 = LoadOneVK(i, lct);
-        // ringsnark::r1cs_primary_input<R> pml0 = LoadOnePM(i, lct);
-        // ringsnark::rinocchio::proof<R, E> pfl0 = LoadOnePF(i, lct);
-
-        verif = Verify(output1.vk, proof1.pm, proof1.proof, vfTtmp);
-        vfTime += vfTtmp;
-        cout << "verify"<<k<<" time:\t" << vfTtmp << "s" << endl;
-        if(verif){
-            cout << "verify"<<k<<" passed:\t" << std::boolalpha << verif << endl;
-        }
-
-        if(!verif){
-            afalse_fl++;
-            if(afalse_fl>=5){
-                break;
-            }
-        }
+        // if(!verif){
+        //     afalse_fl++;
+        //     if(afalse_fl>=5){
+        //         break;
+        //     }
+        // }
     }
 
-    if(afalse_fl>0){
-        verif = false;
+    // if(afalse_fl>0){
+    //     verif = false;
+    // }
+
+
+    // std::random_device rd;
+    // std::mt19937 gen(rd());
+    std::mt19937 gen(time(0));
+    std::uniform_int_distribution<size_t> dis;
+    std::vector<size_t> seeds(samp);
+    for (size_t i = 0; i < samp; i++) {
+        seeds[i] = dis(gen);
     }
 
+    clock_t agg_begin = clock();
+    // ringsnark::rinocchio::proof<R, E> aggedProof = AggregateProve(output1, pos);
+    // ringsnark::rinocchio::proof<R, E> aggedProof = AggregateProve_r(output1, pos, seeds, output1.context);
+    // ringsnark::rinocchio::proof<R, E> aggedProof = AggLogProve(output1, pos);
+    ringsnark::rinocchio::proof<R, E> aggedProof = AggLogProve_r(output1, pos, seeds, output1.context);
+    clock_t agg_finish = clock();
+
+    // cout<<"agg debug5"<<endl;
+
+    verif = ringsnark::rinocchio::aggverifier(output1.vk, aggedProof);
+    // cout<<"agg debug6"<<endl;
+    clock_t verify_finish = clock();
+
+    double aggTime = ((double)agg_finish - agg_begin) / CLOCKS_PER_SEC;
+
+    vfTime = ((double)verify_finish - agg_finish) / CLOCKS_PER_SEC;
 
     cout << "Size of proof:\t" << pfSize << " bits" << endl;
     cout << "prover time is:\t" << pfTime <<"s"<< endl;
+    cout << "aggregate time is:\t" << aggTime <<"s"<< endl;
     cout << "verify time is:\t" << vfTime <<"s"<< endl;
     cout << "Verification passed: " << std::boolalpha << verif << endl;
 
@@ -2785,6 +3012,7 @@ int main(int argc,char** argv) {
 
     outFile<< "setup time is:\t"<< output1.setup_time <<"s"<<endl;
     outFile<< "prove time is:\t"<< pfTime <<"s"<<endl;
+    outFile<< "aggregate time is:\t"<< aggTime <<"s"<<endl;
     outFile<< "verify time is:\t"<< vfTime <<"s"<<endl;
     outFile<< "Verification passed: " << std::boolalpha << verif << endl;
     outFile<<endl<<endl;

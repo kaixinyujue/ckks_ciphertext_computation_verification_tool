@@ -1729,138 +1729,138 @@ private:
     size_t ex_unfold;
 };
 
-void is_e_des(std::string filename){
-    if (std::filesystem::exists(filename)) {
-        e_des = true;
-    }
-}
+// void is_e_des(std::string filename){
+//     if (std::filesystem::exists(filename)) {
+//         e_des = true;
+//     }
+// }
 
-void clear_e_cache(std::string filename){
-    if (std::filesystem::exists(filename)) {
-        std::filesystem::remove(filename);
-    }
-}
+// void clear_e_cache(std::string filename){
+//     if (std::filesystem::exists(filename)) {
+//         std::filesystem::remove(filename);
+//     }
+// }
 
-int e_steps(string e02e, string save_path) {
-    e_des = false;
-    is_e_des("e_test.txt");
+// int e_steps(string e02e, string save_path) {
+//     e_des = false;
+//     is_e_des("e_test.txt");
 
-    //params
-    EncryptionParameters params(scheme_type::ckks);
-    auto poly_modulus_degree = ModulusDegree;
-    auto inner_poly_modulus_degree = 2* poly_modulus_degree;
+//     //params
+//     EncryptionParameters params(scheme_type::ckks);
+//     auto poly_modulus_degree = ModulusDegree;
+//     auto inner_poly_modulus_degree = 2* poly_modulus_degree;
 
-    params.set_poly_modulus_degree(poly_modulus_degree);
-    double scale=pow(2.0, S_P);
+//     params.set_poly_modulus_degree(poly_modulus_degree);
+//     double scale=pow(2.0, S_P);
 
 
-    params.set_coeff_modulus(default_double_batching_modulus(poly_modulus_degree, inner_poly_modulus_degree));
-    SEALContext context(params);
+//     params.set_coeff_modulus(default_double_batching_modulus(poly_modulus_degree, inner_poly_modulus_degree));
+//     SEALContext context(params);
 
-    // print_params(params);
-    // cout<<"params"<<endl;
+//     // print_params(params);
+//     // cout<<"params"<<endl;
 
-    R::set_context(context);
-    E::set_context(inner_poly_modulus_degree);
+//     R::set_context(context);
+//     E::set_context(inner_poly_modulus_degree);
     
-    ringsnark::protoboard<R> pb;
+//     ringsnark::protoboard<R> pb;
 
-    vector<vector<size_t>> coefficient = {{0, 1}};
-    vector<vector<size_t>> exp = {{1, 1}};
-    vector<vector<size_t>> aj = {{1}, {1}};
-    size_t e_02 = getCipherNum(e02e);
+//     vector<vector<size_t>> coefficient = {{0, 1}};
+//     vector<vector<size_t>> exp = {{1, 1}};
+//     vector<vector<size_t>> aj = {{1}, {1}};
+//     size_t e_02 = getCipherNum(e02e);
 
-    auto encoder = CKKSEncoder(context);
-    KeyGenerator keygen(context);
-    auto secret_key = keygen.secret_key();
-    PublicKey public_key;
-    keygen.create_public_key(public_key);
+//     auto encoder = CKKSEncoder(context);
+//     KeyGenerator keygen(context);
+//     auto secret_key = keygen.secret_key();
+//     PublicKey public_key;
+//     keygen.create_public_key(public_key);
 
-    Encryptor encryptor(context, public_key);
-    Evaluator evaluator(context);
+//     Encryptor encryptor(context, public_key);
+//     Evaluator evaluator(context);
 
-    auto tables =context.get_context_data(context.first_parms_id())->small_ntt_tables();
-    size_t slot_count = encoder.slot_count();
-    // cout<<"slot count: "<<slot_count<<endl;
-    vector<double> vs(slot_count);
-    Plaintext ptxt;
-    Ciphertext ctxt;
-    vector<Ciphertext> cipherVec;
+//     auto tables =context.get_context_data(context.first_parms_id())->small_ntt_tables();
+//     size_t slot_count = encoder.slot_count();
+//     // cout<<"slot count: "<<slot_count<<endl;
+//     vector<double> vs(slot_count);
+//     Plaintext ptxt;
+//     Ciphertext ctxt;
+//     vector<Ciphertext> cipherVec;
 
-    for(int i=0;i<slot_count;i++)
-    {
-        vs[i]=i;
-    }
-    encoder.encode(vs,scale,ptxt);
-    encryptor.encrypt(ptxt,ctxt);
-    cipherVec.push_back(ctxt);
+//     for(int i=0;i<slot_count;i++)
+//     {
+//         vs[i]=i;
+//     }
+//     encoder.encode(vs,scale,ptxt);
+//     encryptor.encrypt(ptxt,ctxt);
+//     cipherVec.push_back(ctxt);
 
-    clock_t start_clock = clock();
+//     clock_t start_clock = clock();
 
-    CircuitE circuite = CircuitE(pb, coefficient, exp, aj, 2, e_02);
+//     CircuitE circuite = CircuitE(pb, coefficient, exp, aj, 2, e_02);
 
-    circuite.aj_to_aplain(context, scale, pb);
+//     circuite.aj_to_aplain(context, scale, pb);
 
-    circuite.generate_r1cs_constraints(pb);
-    clock_t r1cs_constrains_finish = clock();
+//     circuite.generate_r1cs_constraints(pb);
+//     clock_t r1cs_constrains_finish = clock();
     
-    cout << "R1CS satisfied: " << std::boolalpha << pb.is_satisfied() << endl;
-    cout << endl;
+//     cout << "R1CS satisfied: " << std::boolalpha << pb.is_satisfied() << endl;
+//     cout << endl;
 
-    cout << "=== Rinocchio ===" << endl;
-    clock_t generator_begin = clock();
-    auto keypair =ringsnark::rinocchio::generator<R, E>(pb.get_constraint_system());
-    clock_t generator_finish = clock();
-    cout << "Size of pk:\t" << keypair.pk.size_in_bits() << " bits" << endl;
-    cout << "Size of vk:\t" << keypair.vk.size_in_bits() << " bits" << endl;
+//     cout << "=== Rinocchio ===" << endl;
+//     clock_t generator_begin = clock();
+//     auto keypair =ringsnark::rinocchio::generator<R, E>(pb.get_constraint_system());
+//     clock_t generator_finish = clock();
+//     cout << "Size of pk:\t" << keypair.pk.size_in_bits() << " bits" << endl;
+//     cout << "Size of vk:\t" << keypair.vk.size_in_bits() << " bits" << endl;
 
 
-    clock_t poly_compute_begin = clock();
-    circuite.compute_seal_poly(context, cipherVec);//keti2
-    clock_t poly_compute_finish = clock();
+//     clock_t poly_compute_begin = clock();
+//     circuite.compute_seal_poly(context, cipherVec);//keti2
+//     clock_t poly_compute_finish = clock();
 
-    circuite.generate_r1cs_witness(pb);
+//     circuite.generate_r1cs_witness(pb);
 
-    auto proof = ringsnark::rinocchio::prover(keypair.pk, pb.primary_input(), pb.auxiliary_input());
-    clock_t prover_finish = clock();
+//     auto proof = ringsnark::rinocchio::prover(keypair.pk, pb.primary_input(), pb.auxiliary_input());
+//     clock_t prover_finish = clock();
     
 
-    bool verif =
-            ringsnark::rinocchio::verifier(keypair.vk, pb.primary_input(), proof);
-    clock_t verify_finish = clock();
+//     bool verif =
+//             ringsnark::rinocchio::verifier(keypair.vk, pb.primary_input(), proof);
+//     clock_t verify_finish = clock();
 
-    cout << "r1cs_consraint time is: " << ((double)r1cs_constrains_finish - start_clock) / CLOCKS_PER_SEC <<"s"<< endl;
-    cout << "generator time is: " << ((double)generator_finish - generator_begin) / CLOCKS_PER_SEC <<"s"<< endl;
-    cout << "poly compute time is: " << ((double)poly_compute_finish - poly_compute_begin) / CLOCKS_PER_SEC <<"s"<<  endl;
+//     cout << "r1cs_consraint time is: " << ((double)r1cs_constrains_finish - start_clock) / CLOCKS_PER_SEC <<"s"<< endl;
+//     cout << "generator time is: " << ((double)generator_finish - generator_begin) / CLOCKS_PER_SEC <<"s"<< endl;
+//     cout << "poly compute time is: " << ((double)poly_compute_finish - poly_compute_begin) / CLOCKS_PER_SEC <<"s"<<  endl;
 
-    cout << "Size of proof:\t" << proof.size_in_bits() << " bits" << endl;
-    cout << "prover time is:\t" << ((double)prover_finish - poly_compute_finish) / CLOCKS_PER_SEC <<"s"<< endl;
-    cout << "verify time is:\t" << ((double)verify_finish - prover_finish) / CLOCKS_PER_SEC <<"s"<< endl;
-    cout << "Verification passed: " << std::boolalpha << verif << endl;
+//     cout << "Size of proof:\t" << proof.size_in_bits() << " bits" << endl;
+//     cout << "prover time is:\t" << ((double)prover_finish - poly_compute_finish) / CLOCKS_PER_SEC <<"s"<< endl;
+//     cout << "verify time is:\t" << ((double)verify_finish - prover_finish) / CLOCKS_PER_SEC <<"s"<< endl;
+//     cout << "Verification passed: " << std::boolalpha << verif << endl;
 
-    std::ofstream outFile(save_path, std::ios::app);
-    if (!outFile) {
-        std::cout << "无法打开文件"<<save_path<<"进行写入。" << std::endl;
-        return 1;
-    }
-    outFile<<"==============================================================================="<<endl;
-    outFile<< "Operation type:\t-e" << endl;
-    outFile<< "Calculate scale:\t" << e02e << endl;
-    outFile<< "scale=\t2^" << S_P << endl;
-    outFile<< "Size of pk:\t" << keypair.pk.size_in_bits() << " bits" << endl;
-    outFile<< "Size of vk:\t" << keypair.vk.size_in_bits() << " bits" << endl;
-    outFile<< "Size of proof:\t" << proof.size_in_bits() << " bits" << endl;
+//     std::ofstream outFile(save_path, std::ios::app);
+//     if (!outFile) {
+//         std::cout << "无法打开文件"<<save_path<<"进行写入。" << std::endl;
+//         return 1;
+//     }
+//     outFile<<"==============================================================================="<<endl;
+//     outFile<< "Operation type:\t-e" << endl;
+//     outFile<< "Calculate scale:\t" << e02e << endl;
+//     outFile<< "scale=\t2^" << S_P << endl;
+//     outFile<< "Size of pk:\t" << keypair.pk.size_in_bits() << " bits" << endl;
+//     outFile<< "Size of vk:\t" << keypair.vk.size_in_bits() << " bits" << endl;
+//     outFile<< "Size of proof:\t" << proof.size_in_bits() << " bits" << endl;
 
-    outFile<< "setup time is:\t"<< ((double)generator_finish - start_clock) / CLOCKS_PER_SEC <<"s"<<endl;
-    outFile<< "prove time is:\t"<< ((double)prover_finish - poly_compute_finish) / CLOCKS_PER_SEC <<"s"<<endl;
-    outFile<< "verify time is:\t"<< ((double)verify_finish - prover_finish) / CLOCKS_PER_SEC <<"s"<<endl;
-    outFile<< "Verification passed: " << std::boolalpha << verif << endl;
-    outFile<<endl<<endl;
+//     outFile<< "setup time is:\t"<< ((double)generator_finish - start_clock) / CLOCKS_PER_SEC <<"s"<<endl;
+//     outFile<< "prove time is:\t"<< ((double)prover_finish - poly_compute_finish) / CLOCKS_PER_SEC <<"s"<<endl;
+//     outFile<< "verify time is:\t"<< ((double)verify_finish - prover_finish) / CLOCKS_PER_SEC <<"s"<<endl;
+//     outFile<< "Verification passed: " << std::boolalpha << verif << endl;
+//     outFile<<endl<<endl;
 
-    outFile.close();
-    cout << "The calculation verification log has been stored in file: " << save_path << endl;
-    return 0;
-}
+//     outFile.close();
+//     cout << "The calculation verification log has been stored in file: " << save_path << endl;
+//     return 0;
+// }
 
 size_t getNfromA(size_t a_size, string type){
     size_t n = 0;
@@ -2634,16 +2634,16 @@ int main(int argc,char** argv) {
     std::string mul_div = "-m";
     std::string natural_base = "-e";
 
-    if(poly_type==natural_base){
-        if(argc>4){
-            std::string ag4 = argv[4];
-            if(ag4=="clear_e"){
-                clear_e_cache("e_test.txt");
-            }
-        }
-        int res = e_steps(filenameA, filenameB);
-        return res;
-    }
+    // if(poly_type==natural_base){
+    //     if(argc>4){
+    //         std::string ag4 = argv[4];
+    //         if(ag4=="clear_e"){
+    //             clear_e_cache("e_test.txt");
+    //         }
+    //     }
+    //     int res = e_steps(filenameA, filenameB);
+    //     return res;
+    // }
 
     vector<vector<size_t>> coefficient;
     vector<vector<size_t>> exp;
@@ -2667,32 +2667,32 @@ int main(int argc,char** argv) {
         return 1;
     }
 
-    bool clearF = true;
-    if(argc>4){
-        std::string ag4 = argv[4];
-        for (char &c : ag4) {
-            c = std::tolower(static_cast<unsigned char>(c));
-        }
-        if(ag4=="usebuff"){
-            clearF = false;
-        }
-    }
-    if(clearF){
-        std::filesystem::path buff_path = "vbuff";
-        if(std::filesystem::exists(buff_path) && std::filesystem::is_directory(buff_path)){
-            try {
-                std::filesystem::remove_all(buff_path);
-            } catch (const std::filesystem::filesystem_error& e) {
-                std::cerr << "file is occupied, " << e.what() << std::endl;
-            }
-        }
-    }
+    // bool clearF = true;
+    // if(argc>4){
+    //     std::string ag4 = argv[4];
+    //     for (char &c : ag4) {
+    //         c = std::tolower(static_cast<unsigned char>(c));
+    //     }
+    //     if(ag4=="usebuff"){
+    //         clearF = false;
+    //     }
+    // }
+    // if(clearF){
+    //     std::filesystem::path buff_path = "vbuff";
+    //     if(std::filesystem::exists(buff_path) && std::filesystem::is_directory(buff_path)){
+    //         try {
+    //             std::filesystem::remove_all(buff_path);
+    //         } catch (const std::filesystem::filesystem_error& e) {
+    //             std::cerr << "file is occupied, " << e.what() << std::endl;
+    //         }
+    //     }
+    // }
 
-    std::filesystem::path dir_path = sl_path0;
-    if(std::filesystem::exists(dir_path) && std::filesystem::is_directory(dir_path)){
-        load_verify_only(poly_type, filenameA, filenameB);
-        return 0;
-    }
+    // std::filesystem::path dir_path = sl_path0;
+    // if(std::filesystem::exists(dir_path) && std::filesystem::is_directory(dir_path)){
+    //     load_verify_only(poly_type, filenameA, filenameB);
+    //     return 0;
+    // }
 
     size_t pfSize = 0;
     double pfTime = 0;
@@ -2704,24 +2704,22 @@ int main(int argc,char** argv) {
     size_t pkSize = output1.pk.size_in_bits();
     size_t vkSize = output1.vk.size_in_bits();
 
-    size_t samp = getSampNum(n_comp, retainNumbers(filenameA), poly_type);
+    // size_t samp = getSampNum(n_comp, retainNumbers(filenameA), poly_type);
+    size_t samp = n_comp;
 
-    saveSizet(samp, sl_path0 + "/", "samp.bin");
+    // saveSizet(samp, sl_path0 + "/", "samp.bin");
 
-    // size_t samp = n_comp;
-    std::uniform_int_distribution<> dis(0, n_comp-1);
+    // std::uniform_int_distribution<> dis(0, n_comp-1);
 
     // SEALContext lct = creat_context(4096);
 
     int afalse_fl = 0;
 
     for(int i=0;i<samp;i++){
-        
-
-        std::mt19937 gen(time(0));
-        size_t k = dis(gen);
-        // int k = 0;
-        Circuit circuit = Comute(output1.context, output1.circuit, data, k, n_comp, poly_type);
+        // std::mt19937 gen(time(0));
+        // size_t k = dis(gen);
+        int k = i+1;
+        Circuit circuit = Comute(output1.context, output1.circuit, data, i, n_comp, poly_type);
     
         ProveOut proof1 = Prove(output1.pb, circuit, output1.pk);
         pfSize += proof1.proof.size_in_bits();
@@ -2730,12 +2728,12 @@ int main(int argc,char** argv) {
         cout << "proof"<<k<<" time:\t" << proof1.prove_time << "s" << endl;
 
 
-        string istr = std::to_string(i);
-        saveSizet(k, sl_path0 + "/pv" + istr + "/", "sak.bin");
+        // string istr = std::to_string(i);
+        // saveSizet(k, sl_path0 + "/pv" + istr + "/", "sak.bin");
 
-        SaveOneVK(output1.vk, i);
-        SaveOnePM(proof1.pm, i);
-        SaveOnePF(proof1.proof, i);
+        // SaveOneVK(output1.vk, i);
+        // SaveOnePM(proof1.pm, i);
+        // SaveOnePF(proof1.proof, i);
 
 
         double vfTtmp;

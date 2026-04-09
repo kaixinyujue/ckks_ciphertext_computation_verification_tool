@@ -32,6 +32,7 @@ typedef ringsnark::seal::EncodingElem E;
 #define DEVICE_MEMORY_MAX 50000000
 
 
+bool if_use_cipher = false;
 
 ::polytools::SealPoly *relin_poly0 = nullptr;
 ::polytools::SealPoly *relin_poly1 = nullptr;
@@ -668,6 +669,105 @@ std::vector<::polytools::SealPoly> my_poly_compute(std::vector<Ciphertext> input
     return polys;
 }
 
+std::vector<Plaintext> my_read_file_plain(std::string file_path, int read_num, SEALContext &context){
+
+    auto encoder = CKKSEncoder(context);
+    KeyGenerator keygen(context);
+    auto secret_key = keygen.secret_key();
+    PublicKey public_key;
+    keygen.create_public_key(public_key);
+    Encryptor encryptor(context, public_key);
+
+    size_t slot_count = encoder.slot_count();
+    Plaintext ptxt;
+    // Ciphertext ctxt;
+
+    if(slot_count != N/2){
+        cout<<"slot_count error-------------------------------------"<<endl;
+    }
+
+
+    double scale=pow(2.0, S_P);
+
+    std::vector<Plaintext> plain_inputs;
+    vector<double> a(N/2);
+    vector<double> la(N/2);
+    int cnt;
+    std::string line;
+    std::ifstream fileA(file_path);
+
+    std::uniform_int_distribution<> dist(0, N/2-1);
+    std::uniform_real_distribution<> doubleDist(0.0, 1.0);
+    bool flag = true;
+    std::getline(fileA, line);
+    for(int i=0;i<read_num;i++){
+        // 读取a的值
+        cnt = 0;
+        
+        if(flag){
+            while(std::getline(fileA, line) && cnt < (N/2)){
+                std::stringstream linestream(line);
+                std::vector<std::string> tokens = splitLineStream(linestream, ',');
+                a[cnt] = std::stod(tokens[1]);
+                cnt++;
+            }
+            if(cnt< N/2){
+                flag = false;
+            }
+            if(flag){
+                if(i==0){
+                    for(int j=0;j<N/2;j++){
+                        la[j] = a[j];
+                    }
+                }
+                // 编码获取两个列向量的编码结果
+                encoder.encode(a, scale, ptxt);
+
+                plain_inputs.push_back(ptxt);
+                // // 对编码结果进行加密
+                // encryptor.encrypt(ptxt, ctxt);
+                // cipher_inputs.push_back(ctxt);
+            }
+            else{
+                std::mt19937 gen(time(0));
+                int radi = dist(gen);
+                double radd = doubleDist(gen);
+                la[radi] = radd;
+                encoder.encode(la, scale, ptxt);
+                
+                plain_inputs.push_back(ptxt);
+                // encryptor.encrypt(ptxt, ctxt);
+                // cipher_inputs.push_back(ctxt);
+            }
+        }
+        else{
+            std::mt19937 gen(time(0));
+            int radi = dist(gen);
+            double radd = doubleDist(gen);
+            la[radi] = radd;
+            encoder.encode(la, scale, ptxt);
+            
+            plain_inputs.push_back(ptxt);
+            // encryptor.encrypt(ptxt, ctxt);
+            // cipher_inputs.push_back(ctxt);
+        }
+
+        // ::polytools::SealPoly pt0 = ::polytools::SealPoly(context, ctxt, 0);
+        // ::polytools::SealPoly pt1 = ::polytools::SealPoly(context, ctxt, 1);
+
+        // if(pt0.get_coeff_modulus_count()!=LEN || pt1.get_coeff_modulus_count()!=LEN){
+        //     cout<< "warring: LEN and coeff_modulus_count dont match!!" <<endl;
+        // }
+
+    }
+    fileA.close();
+
+    // relin_poly0 = new ::polytools::SealPoly(context, ctxt, 0);
+    // relin_poly1 = new ::polytools::SealPoly(context, ctxt, 1);
+
+    return plain_inputs;
+}
+
 
 std::vector<Ciphertext> my_read_file(std::string file_path, int read_num, SEALContext &context){
 
@@ -856,67 +956,6 @@ std::vector<Ciphertext> my_read_file(std::string file_path, int read_num, SEALCo
     return cipher_inputs;
 }
 
-// std::vector<myCipherText> read_file(std::string file_path, int read_num){
-//     std::vector<myCipherText> cipher_inputs;
-//     double a[N/2];
-//     double la[N/2];
-//     int cnt;
-//     std::string line;
-//     std::ifstream fileA(file_path);
-
-//     std::uniform_int_distribution<> dist(0, N/2-1);
-//     std::uniform_real_distribution<> doubleDist(0.0, 1.0);
-//     bool flag = true;
-//     std::getline(fileA, line);
-//     for(int i=0;i<read_num;i++){
-//         // 读取a的值
-//         cnt = 0;
-        
-//         if(flag){
-//             while(std::getline(fileA, line) && cnt < (N/2)){
-//                 std::stringstream linestream(line);
-//                 std::vector<std::string> tokens = splitLineStream(linestream, ',');
-//                 a[cnt] = std::stod(tokens[1]);
-//                 cnt++;
-//             }
-//             if(cnt< N/2){
-//                 flag = false;
-//             }
-//             if(flag){
-//                 if(i==0){
-//                     for(int j=0;j<N/2;j++){
-//                         la[j] = a[j];
-//                     }
-//                 }
-//                 // 编码获取两个列向量的编码结果
-//                 auto encodeVeca = encode(a);
-//                 // 对编码结果进行加密
-//                 myCipherText ciphertexta = encrypt(encodeVeca, getpub());
-//                 cipher_inputs.push_back(ciphertexta);
-//             }
-//             else{
-//                 std::mt19937 gen(time(0));
-//                 int radi = dist(gen);
-//                 double radd = doubleDist(gen);
-//                 la[radi] = radd;
-//                 auto encodeVeca = encode(la);
-//                 myCipherText ciphertexta = encrypt(encodeVeca, getpub());
-//                 cipher_inputs.push_back(ciphertexta);
-//             }
-//         }
-//         else{
-//             std::mt19937 gen(time(0));
-//             int radi = dist(gen);
-//             double radd = doubleDist(gen);
-//             la[radi] = radd;
-//             auto encodeVeca = encode(la);
-//             myCipherText ciphertexta = encrypt(encodeVeca, getpub());
-//             cipher_inputs.push_back(ciphertexta);
-//         }
-//     }
-//     fileA.close();
-//     return cipher_inputs;
-// }
 
 
 std::vector<ULLA> polys2ULLAs(std::vector<::polytools::SealPoly> &polys){
@@ -1047,9 +1086,9 @@ int main(int argc,char** argv){
     // 初始化（生成公钥私钥对,编码器加密器）
     SEALContext context = myInit0(N);
 
-    std::cout<<"read begin"<<std::endl;
+    std::cout<<"read and init"<<std::endl;
     std::vector<Ciphertext> inputs = my_read_file(filenameA , Cipher_number, context);
-    std::cout<<"read finish"<<std::endl;
+    std::cout<<"init finish"<<std::endl;
 
     // std::cout<<"poly_compute"<<std::endl;
     std::vector<::polytools::SealPoly> polys = my_poly_compute(inputs, coefficient, exp, context);

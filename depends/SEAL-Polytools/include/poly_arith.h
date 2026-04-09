@@ -151,6 +151,14 @@ namespace polytools
             return is_ntt;
         }
 
+        std::uint64_t get_data_at_idx(std::size_t idx){
+            return data.at(idx);
+        }
+
+        std::uint64_t get_data_size(){
+            return data.size();
+        }
+
         /// Serialize polynomial to json
         nlohmann::json to_json() const;
 

@@ -2139,6 +2139,19 @@ bool Verify(ringsnark::rinocchio::verification_key<R, E> vk, r1cs_primary_input<
     return verif;
 }
 
+ringsnark::seal::RingElem testVerify(ringsnark::rinocchio::verification_key<R, E> vk, r1cs_primary_input<R> pm, ringsnark::rinocchio::proof<R, E> proof, double &verify_time){
+    clock_t prover_finish = clock();
+
+    ringsnark::seal::RingElem verif = ringsnark::rinocchio::test_verifier(vk, pm, proof);
+    clock_t verify_finish = clock();
+
+    // cout << "Verification passed: " << std::boolalpha << verif << endl;
+    // cout << "verify time is: " << ((double)verify_finish - prover_finish) / CLOCKS_PER_SEC << endl;
+    verify_time = ((double)verify_finish - prover_finish) / CLOCKS_PER_SEC;
+
+    return verif;
+}
+
 void saveSizet(size_t siz, string filePath, string numName){
     string dir = filePath;
     if (!dir.empty() && dir.back() == '/') {
@@ -2697,31 +2710,37 @@ int main(int argc,char** argv) {
     size_t pfSize = 0;
     double pfTime = 0;
     double vfTime = 0;
-    bool verif = false;
+    // bool verif = false;
 
     SetupOut output1 = Setup(ModulusDegree, scale, coefficient, exp, aj);
     
     size_t pkSize = output1.pk.size_in_bits();
     size_t vkSize = output1.vk.size_in_bits();
 
-    size_t samp = getSampNum(n_comp, retainNumbers(filenameA), poly_type);
+    // size_t samp = getSampNum(n_comp, retainNumbers(filenameA), poly_type);
+    size_t samp = n_comp;
 
     saveSizet(samp, sl_path0 + "/", "samp.bin");
 
+    cout<<"n_comp: "<<n_comp<<endl;
+
     // size_t samp = n_comp;
-    std::uniform_int_distribution<> dis(0, n_comp-1);
+    // std::uniform_int_distribution<> dis(0, n_comp-1);
 
     // SEALContext lct = creat_context(4096);
 
     int afalse_fl = 0;
 
-    for(int i=0;i<samp;i++){
-        
+    bool verif = true;
 
-        std::mt19937 gen(time(0));
-        size_t k = dis(gen);
-        // int k = 0;
-        Circuit circuit = Comute(output1.context, output1.circuit, data, k, n_comp, poly_type);
+    ringsnark::seal::RingElem tverif, lastV, l2V;
+    array<ringsnark::seal::RingElem, 2> tvf;
+    for(int i=0;i<samp;i++){
+        // std::mt19937 gen(time(0));
+        // size_t k = dis(gen);
+        size_t k = i+1;
+        // Circuit circuit = Comute(output1.context, output1.circuit, data, k, n_comp, poly_type);
+        Circuit circuit = Comute(output1.context, output1.circuit, data, i, n_comp, poly_type);
     
         ProveOut proof1 = Prove(output1.pb, circuit, output1.pk);
         pfSize += proof1.proof.size_in_bits();
@@ -2731,11 +2750,11 @@ int main(int argc,char** argv) {
 
 
         string istr = std::to_string(i);
-        saveSizet(k, sl_path0 + "/pv" + istr + "/", "sak.bin");
+        // saveSizet(k, sl_path0 + "/pv" + istr + "/", "sak.bin");
 
-        SaveOneVK(output1.vk, i);
-        SaveOnePM(proof1.pm, i);
-        SaveOnePF(proof1.proof, i);
+        // SaveOneVK(output1.vk, i);
+        // SaveOnePM(proof1.pm, i);
+        // SaveOnePF(proof1.proof, i);
 
 
         double vfTtmp;
@@ -2743,19 +2762,33 @@ int main(int argc,char** argv) {
         // ringsnark::r1cs_primary_input<R> pml0 = LoadOnePM(i, lct);
         // ringsnark::rinocchio::proof<R, E> pfl0 = LoadOnePF(i, lct);
 
-        verif = Verify(output1.vk, proof1.pm, proof1.proof, vfTtmp);
+        tvf[0] = testVerify(output1.vk, proof1.pm, proof1.proof, vfTtmp);
         vfTime += vfTtmp;
         cout << "verify"<<k<<" time:\t" << vfTtmp << "s" << endl;
-        if(verif){
-            cout << "verify"<<k<<" passed:\t" << std::boolalpha << verif << endl;
+
+        tverif = tvf[0];
+        if(i==0){
+            lastV = tvf[0];
+            tvf[1] = tvf[0];
         }
 
-        if(!verif){
-            afalse_fl++;
-            if(afalse_fl>=5){
-                break;
-            }
+        bool t1 = false, t2 = false, t3 = false, t4 = false;
+        if(tvf[0]==tvf[1]){
+            t1 = true;
         }
+        array<E, 2> t2e0 =  ringsnark::rinocchio::aggsingleproof(output1.vk, proof1.pm, proof1.proof);
+        vector<E> t2e = {t2e0[0], t2e0[1]}; 
+        t2e[0] += t2e[1];
+        vector<R> t2r = ringsnark::rinocchio::decodeTest(output1.vk, t2e);
+        
+        if(tvf[0] == t2r[0]){
+            t2 = true;
+        }
+        
+        lastV = tvf[0];
+        tvf[1] = tvf[0];
+        
+        cout << "is verify t== :"<<t1<<","<<t2<<","<<t3<<","<<t4<<endl;
     }
 
     if(afalse_fl>0){
